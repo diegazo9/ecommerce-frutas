@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  passwordHash  String?   @map("password_hash")
+  role          String    @default("CUSTOMER")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  orders        Order[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  imageUrl    String?   @map("image_url")
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  stock       Decimal     @db.Decimal(10, 2)
+  unit        String      @default("kg")
+  categoryId  Int         @map("category_id")
+  imageUrl    String?     @map("image_url")
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id                Int           @id @default(autoincrement())
+  userId            Int           @map("user_id")
+  total             Decimal       @db.Decimal(10, 2)
+  status            String        @default("PENDIENTE")
+  deliveryDate      DateTime?     @map("delivery_date")
+  deliveryTimeRange String?       @map("delivery_time_range")
+  deliveryAddress   String?       @map("delivery_address")
+  shippingZoneId    Int?          @map("shipping_zone_id")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  user              User          @relation(fields: [userId], references: [id])
+  shippingZone      ShippingZone? @relation(fields: [shippingZoneId], references: [id])
+  items             OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int      @map("order_id")
+  productId   Int      @map("product_id")
+  quantity    Decimal  @db.Decimal(10, 2)
+  price       Decimal  @db.Decimal(10, 2)
+  order       Order    @relation(fields: [orderId], references: [id])
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model ShippingZone {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  price       Decimal  @db.Decimal(10, 2) @default(0)
+  isActive    Boolean  @default(true) @map("is_active")
+  orders      Order[]
+
+  @@map("shipping_zones")
+}
