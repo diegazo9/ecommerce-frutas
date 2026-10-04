@@ -40,22 +40,25 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <div className="card-hover bg-white rounded-3xl overflow-hidden flex flex-col group border-2 border-transparent relative shadow-sm hover:shadow-xl transition-all duration-300">
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-emerald-100/50 via-transparent to-pink-100/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0"></div>
+    <div className="card-hover bg-white rounded-3xl overflow-hidden flex flex-col group border border-emerald-100/80 relative shadow-xs hover:shadow-xl transition-all duration-300">
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-amber-100/30 via-transparent to-rose-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0"></div>
       
-      <div className="relative aspect-square overflow-hidden bg-slate-50 p-6 z-10">
+      <div className="relative aspect-square overflow-hidden bg-slate-50 p-5 z-10">
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
         <img 
-          src={product.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=10b981&color=fff&size=512`} 
+          src={product.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=16a34a&color=fff&size=512`} 
           alt={product.name} 
-          onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=10b981&color=fff&size=512`; }}
-          className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-700 ease-out shadow-sm"
+          onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=16a34a&color=fff&size=512`; }}
+          className="w-full h-full object-cover rounded-2xl group-hover:scale-108 transition-transform duration-700 ease-out shadow-xs"
         />
         {product.category && (
-          <span className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-black text-emerald-600 shadow-md z-20">
-            {product.category.name}
+          <span className="absolute top-3.5 left-3.5 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-black text-emerald-700 shadow-xs z-20 border border-emerald-100">
+            🌿 {product.category.name}
           </span>
         )}
+        <span className="absolute top-3.5 right-3.5 bg-gradient-to-r from-amber-400 to-amber-300 text-amber-950 font-black text-[10px] px-2.5 py-0.5 rounded-full shadow-xs uppercase tracking-wider flex items-center gap-1 z-20">
+          ☀️ Del Día
+        </span>
       </div>
       
       <div className="p-5 flex flex-col flex-grow z-10 bg-white">
@@ -99,10 +102,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </div>
           <button 
             onClick={handleAddToCart}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ${
+            className={`px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all ${
               isAdded 
                 ? 'bg-emerald-500 text-white scale-105 shadow-md shadow-emerald-500/30' 
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:scale-[1.02]'
+                : 'btn-gradient shadow-xs hover:shadow-md'
             }`}
             title="Añadir al carrito"
           >
