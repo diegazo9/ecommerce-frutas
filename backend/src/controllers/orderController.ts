@@ -28,22 +28,27 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
     }
 
     for (const item of items) {
-      const product = await prisma.product.findUnique({ where: { id: item.productId } });
+      const quantity = Number(item.quantity);
+      if (!quantity || isNaN(quantity) || quantity <= 0) {
+        return res.status(400).json({ error: 'Cada producto debe tener una cantidad válida y mayor a cero' });
+      }
+
+      const product = await prisma.product.findUnique({ where: { id: Number(item.productId) } });
       if (!product) return res.status(404).json({ error: `Producto con ID ${item.productId} no encontrado` });
 
-      const itemTotal = Number(product.price) * item.quantity;
+      const itemTotal = Number(product.price) * quantity;
       total += itemTotal;
 
       orderItemsData.push({
         productId: product.id,
-        quantity: item.quantity,
+        quantity: quantity,
         price: product.price
       });
 
       preferenceItems.push({
         id: product.id.toString(),
         title: product.name,
-        quantity: item.quantity,
+        quantity: quantity,
         unit_price: Number(product.price),
         currency_id: 'ARS'
       });
@@ -126,14 +131,21 @@ export const receiveWebhook = async (req: Request, res: Response) => {
       try {
         const paymentClient = new Payment(client);
         const paymentInfo = await paymentClient.get({ id: Number(paymentId) });
-        const orderId = paymentInfo.metadata?.order_id || paymentInfo.external_reference;
+        const orderId = Number(paymentInfo.metadata?.order_id || paymentInfo.external_reference);
         
         if (orderId && paymentInfo.status === 'approved') {
-          await prisma.order.update({
-            where: { id: Number(orderId) },
-            data: { status: 'PAGADO' }
-          });
-          console.log(`[Webhook MP] Pedido #${orderId} actualizado a PAGADO`);
+          const order = await prisma.order.findUnique({ where: { id: orderId } });
+          
+          // Seguridad: validar que la orden exista y que el monto pagado cubra el total de la orden
+          if (order && Number(paymentInfo.transaction_amount) >= Number(order.total)) {
+            await prisma.order.update({
+              where: { id: orderId },
+              data: { status: 'PAGADO' }
+            });
+            console.log(`[Webhook MP] Pedido #${orderId} verificado con monto correcto y actualizado a PAGADO`);
+          } else {
+            console.warn(`[Webhook MP] Alerta: Monto de pago (${paymentInfo.transaction_amount}) no coincide con el total esperado (${order?.total})`);
+          }
         }
       } catch (err) {
         console.error('Error al procesar pago en webhook:', err);
@@ -154,11 +166,11 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
 
     if (!userId) return res.status(401).json({ error: 'No autorizado' });
 
-    // Sincronización automática de pagos con Mercado Pago (ideal para entorno local/red sin IP pública)
+    // Sincronización automática de pagos con Mercado Pago
     try {
       const pendingOrders = await prisma.order.findMany({
         where: { status: 'PENDIENTE' },
-        select: { id: true }
+        select: { id: true, total: true }
       });
 
       if (pendingOrders.length > 0) {
@@ -172,15 +184,16 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
         });
 
         if (searchResult.results && searchResult.results.length > 0) {
-          const pendingIds = new Set(pendingOrders.map(o => o.id));
+          const pendingMap = new Map(pendingOrders.map(o => [o.id, Number(o.total)]));
           for (const p of searchResult.results) {
             const orderId = Number(p.metadata?.order_id || p.external_reference);
-            if (orderId && pendingIds.has(orderId) && p.status === 'approved') {
+            const expectedTotal = pendingMap.get(orderId);
+            if (orderId && expectedTotal !== undefined && p.status === 'approved' && Number(p.transaction_amount) >= expectedTotal) {
               await prisma.order.update({
                 where: { id: orderId },
                 data: { status: 'PAGADO' }
               });
-              pendingIds.delete(orderId);
+              pendingMap.delete(orderId);
             }
           }
         }

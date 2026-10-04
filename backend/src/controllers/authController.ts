@@ -9,8 +9,22 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOG
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password, role } = req.body;
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const { name, email, password } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'El nombre es obligatorio' });
+    }
+
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'Ingresa un email válido' });
+    }
+
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
     if (existingUser) {
       return res.status(400).json({ error: 'El email ya está registrado' });
@@ -18,18 +32,19 @@ export const register = async (req: Request, res: Response) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
+    // Seguridad: forzar siempre rol CUSTOMER en registro público (evita escalada de privilegios)
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: name.trim(),
+        email: cleanEmail,
         passwordHash,
-        role: role || 'CUSTOMER'
+        role: 'CUSTOMER'
       }
     });
 
     res.status(201).json({ message: 'Usuario registrado exitosamente', userId: user.id });
   } catch (error) {
-    console.error(error);
+    console.error('Error al registrar usuario:', error);
     res.status(500).json({ error: 'Error al registrar el usuario' });
   }
 };
