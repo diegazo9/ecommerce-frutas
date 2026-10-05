@@ -110,6 +110,19 @@ export const login = async (email: string, password: string) => {
   return response.json();
 };
 
+export const registerUser = async (name: string, email: string, password: string) => {
+  const response = await fetch(`${API_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password })
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Error al registrar el usuario');
+  }
+  return response.json();
+};
+
 export const googleLogin = async (token: string) => {
   const response = await fetch(`${API_URL}/auth/google`, {
     method: 'POST',

@@ -42,7 +42,15 @@ export const register = async (req: Request, res: Response) => {
       }
     });
 
-    res.status(201).json({ message: 'Usuario registrado exitosamente', userId: user.id });
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: '1d'
+    });
+
+    res.status(201).json({ 
+      message: 'Usuario registrado exitosamente', 
+      token, 
+      user: { id: user.id, name: user.name, email: user.email, role: user.role } 
+    });
   } catch (error) {
     console.error('Error al registrar usuario:', error);
     res.status(500).json({ error: 'Error al registrar el usuario' });
