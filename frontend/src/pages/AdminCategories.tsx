@@ -41,9 +41,9 @@ export const AdminCategories = () => {
       const formDataImage = new FormData();
       formDataImage.append('image', file);
 
-      const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
+      const apiKey = import.meta.env.VITE_IMGBB_API_KEY || '6799919ad0a03e9ca44600b9ee1bc0cb';
       if (!apiKey || apiKey === 'TU_API_KEY_DE_IMGBB') {
-        alert('Falta configurar la API Key de ImgBB en el archivo .env (VITE_IMGBB_API_KEY)');
+        alert('Falta configurar la API Key de ImgBB en las variables de entorno (VITE_IMGBB_API_KEY)');
         setIsUploadingImage(false);
         return;
       }
