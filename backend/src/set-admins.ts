@@ -1,13 +1,12 @@
 import { prisma } from './prisma';
-import bcrypt from 'bcryptjs';
 
 async function setAdmins() {
   const adminEmails = [
-    { email: 'ecommerceverduras@gmail.com', name: 'Admin Ecommerce Verduras' },
-    { email: 'diegazo9@gmail.com', name: 'Diego Admin' }
+    { email: 'ecommerceverduras@gmail.com', name: 'Ecommerce Verduras' },
+    { email: 'diegazo9@gmail.com', name: 'Diego Reynoso' }
   ];
 
-  console.log('🔄 Asignando roles de ADMINISTRADOR en la base de datos...\n');
+  console.log('🔄 Configurando administradores exclusivos de Google OAuth...\n');
 
   for (const { email, name } of adminEmails) {
     const existing = await prisma.user.findUnique({
@@ -17,27 +16,30 @@ async function setAdmins() {
     if (existing) {
       const updated = await prisma.user.update({
         where: { id: existing.id },
-        data: { role: 'ADMIN' }
+        data: { role: 'ADMIN', passwordHash: null }
       });
-      console.log(`✅ Usuario existente actualizado a ADMIN: ${updated.email} (ID: ${updated.id})`);
+      console.log(`✅ Administrador actualizado (Solo Google): ${updated.email}`);
     } else {
-      const defaultPassword = 'admin' + Math.floor(1000 + Math.random() * 9000);
-      const hashedPassword = await bcrypt.hash('admin123', 10);
       const created = await prisma.user.create({
         data: {
           name,
           email: email.toLowerCase(),
-          passwordHash: hashedPassword,
+          passwordHash: null,
           role: 'ADMIN'
         }
       });
-      console.log(`✅ Nuevo usuario ADMIN creado en la base de datos: ${created.email} (ID: ${created.id})`);
-      console.log(`   Nota: Si inicia sesión con Google, entrará directamente como ADMIN.`);
-      console.log(`   Si inicia sesión con email y contraseña, la contraseña temporal es: admin123\n`);
+      console.log(`✅ Administrador creado (Solo Google): ${created.email}`);
     }
   }
 
-  console.log('✨ Roles de administrador asignados con éxito.');
+  // Eliminar cuentas temporales
+  await prisma.user.deleteMany({
+    where: {
+      email: { in: ['admin@vibranfrut.com', 'cliente@vibranfrut.com'] }
+    }
+  });
+
+  console.log('✨ Listos. Solo estos dos correos quedan registrados para ingresar con Google.');
 }
 
 setAdmins()

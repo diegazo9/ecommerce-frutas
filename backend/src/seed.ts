@@ -1,83 +1,50 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminEmail = 'admin@vibranfrut.com';
-  
-  // Check if admin already exists
-  const existingAdmin = await prisma.user.findUnique({
-    where: { email: adminEmail }
-  });
+  console.log('🌱 Inicializando administradores autorizados con Google OAuth...\n');
 
-  if (!existingAdmin) {
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    
-    await prisma.user.create({
-      data: {
-        name: 'Administrador Principal',
-        email: adminEmail,
-        passwordHash: hashedPassword,
-        role: 'ADMIN'
-      }
-    });
-    console.log('✅ Usuario Administrador creado exitosamente.');
-    console.log(`Email: ${adminEmail}`);
-    console.log('Contraseña: admin123');
-  } else {
-    console.log('⚠️ El usuario administrador ya existe.');
-  }
-
-  // Asegurar administradores designados
   const designatedAdmins = [
-    { email: 'diegazo9@gmail.com', name: 'Diego Admin' },
-    { email: 'ecommerceverduras@gmail.com', name: 'Admin Ecommerce Verduras' }
+    { email: 'diegazo9@gmail.com', name: 'Diego Reynoso' },
+    { email: 'ecommerceverduras@gmail.com', name: 'Ecommerce Verduras' }
   ];
 
   for (const adm of designatedAdmins) {
-    const user = await prisma.user.findUnique({ where: { email: adm.email } });
-    if (user) {
+    const existing = await prisma.user.findUnique({
+      where: { email: adm.email.toLowerCase() }
+    });
+
+    if (existing) {
       await prisma.user.update({
-        where: { id: user.id },
-        data: { role: 'ADMIN' }
+        where: { id: existing.id },
+        data: {
+          role: 'ADMIN',
+          passwordHash: null // Sin contraseña: autenticación exclusiva por Google OAuth
+        }
       });
-      console.log(`✅ Usuario administrador actualizado: ${adm.email}`);
+      console.log(`✅ Administrador confirmado (Solo Google): ${adm.email}`);
     } else {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
       await prisma.user.create({
         data: {
           name: adm.name,
-          email: adm.email,
-          passwordHash: hashedPassword,
-          role: 'ADMIN'
+          email: adm.email.toLowerCase(),
+          role: 'ADMIN',
+          passwordHash: null // Sin contraseña: autenticación exclusiva por Google OAuth
         }
       });
-      console.log(`✅ Usuario administrador creado: ${adm.email}`);
+      console.log(`✅ Administrador creado (Solo Google): ${adm.email}`);
     }
   }
 
-  const customerEmail = 'cliente@vibranfrut.com';
-  const existingCustomer = await prisma.user.findUnique({
-    where: { email: customerEmail }
+  // Eliminar cuentas temporales si existieran
+  await prisma.user.deleteMany({
+    where: {
+      email: { in: ['admin@vibranfrut.com', 'cliente@vibranfrut.com'] }
+    }
   });
 
-  if (!existingCustomer) {
-    const hashedPassword = await bcrypt.hash('cliente123', 10);
-    await prisma.user.create({
-      data: {
-        name: 'Cliente VIP',
-        email: customerEmail,
-        passwordHash: hashedPassword,
-        role: 'CUSTOMER'
-      }
-    });
-    console.log('✅ Usuario Cliente creado exitosamente.');
-    console.log(`Email: ${customerEmail}`);
-    console.log('Contraseña: cliente123');
-  } else {
-    console.log('⚠️ El usuario cliente ya existe.');
-  }
+  console.log('\n✨ Configuración de administradores completada sin contraseñas temporales.');
 }
 
 main()
