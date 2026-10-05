@@ -29,6 +29,34 @@ async function main() {
     console.log('⚠️ El usuario administrador ya existe.');
   }
 
+  // Asegurar administradores designados
+  const designatedAdmins = [
+    { email: 'diegazo9@gmail.com', name: 'Diego Admin' },
+    { email: 'ecommerceverduras@gmail.com', name: 'Admin Ecommerce Verduras' }
+  ];
+
+  for (const adm of designatedAdmins) {
+    const user = await prisma.user.findUnique({ where: { email: adm.email } });
+    if (user) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { role: 'ADMIN' }
+      });
+      console.log(`✅ Usuario administrador actualizado: ${adm.email}`);
+    } else {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      await prisma.user.create({
+        data: {
+          name: adm.name,
+          email: adm.email,
+          passwordHash: hashedPassword,
+          role: 'ADMIN'
+        }
+      });
+      console.log(`✅ Usuario administrador creado: ${adm.email}`);
+    }
+  }
+
   const customerEmail = 'cliente@vibranfrut.com';
   const existingCustomer = await prisma.user.findUnique({
     where: { email: customerEmail }
