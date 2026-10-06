@@ -2,10 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 import productRoutes from './routes/productRoutes';
 import authRoutes from './routes/authRoutes';
 import orderRoutes from './routes/orderRoutes';
 import shippingRoutes from './routes/shippingRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 const app = express();
 
@@ -37,7 +39,12 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Servir carpeta de uploads estáticos para fotos de productos
+const uploadsDir = path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(uploadsDir));
 
 // Limitador de tasa contra ataques de fuerza bruta en autenticación (Login / Register)
 const authLimiter = rateLimit({
@@ -67,6 +74,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/shipping-zones', shippingRoutes);
+app.use('/api/upload', uploadRoutes);
 
 const PORT = process.env.PORT || 3000;
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProducts, createProduct, updateProduct, deleteProduct, getCategories } from '../services/api';
+import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadImage } from '../services/api';
 import type { Product, Category } from '../services/api';
 import { Plus, Edit2, Trash2, Loader2, AlertCircle, X } from 'lucide-react';
 
@@ -38,32 +38,27 @@ export const AdminProducts = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 8 * 1024 * 1024) {
+      alert('La imagen no debe superar los 8 MB.');
+      return;
+    }
+
     try {
       setIsUploadingImage(true);
       
-      const formDataImage = new FormData();
-      formDataImage.append('image', file);
-
-      const apiKey = import.meta.env.VITE_IMGBB_API_KEY || '6799919ad0a03e9ca44600b9ee1bc0cb';
-      if (!apiKey || apiKey === 'TU_API_KEY_DE_IMGBB') {
-        alert('Falta configurar la API Key de ImgBB en las variables de entorno (VITE_IMGBB_API_KEY)');
-        setIsUploadingImage(false);
-        return;
-      }
-
-      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-        method: 'POST',
-        body: formDataImage
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
 
-      const data = await response.json();
-      if (data.success) {
-        setFormData(prev => ({ ...prev, imageUrl: data.data.url }));
-      } else {
-        throw new Error(data.error?.message || 'Error de ImgBB');
-      }
+      const base64 = await base64Promise;
+      const uploadedUrl = await uploadImage(base64);
+      setFormData(prev => ({ ...prev, imageUrl: uploadedUrl }));
     } catch (err: any) {
-      alert('Error subiendo imagen: ' + err.message);
+      console.error('Error subiendo imagen:', err);
+      alert('Error subiendo imagen al servidor: ' + (err.message || 'Error desconocido'));
     } finally {
       setIsUploadingImage(false);
     }
@@ -268,7 +263,14 @@ export const AdminProducts = () => {
                   <label className="block text-sm font-bold text-slate-600 mb-1">Foto del Producto</label>
                   <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
                     {formData.imageUrl ? (
-                      <img src={formData.imageUrl} alt="Preview" className="w-16 h-16 rounded-xl object-cover shadow-sm bg-white" />
+                      <img 
+                        src={formData.imageUrl} 
+                        alt="Preview" 
+                        onError={(e) => {
+                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || 'P')}&background=10b981&color=fff`;
+                        }}
+                        className="w-16 h-16 rounded-xl object-cover shadow-sm bg-white" 
+                      />
                     ) : (
                       <div className="w-16 h-16 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400">
                         <Plus className="w-6 h-6" />
@@ -282,10 +284,16 @@ export const AdminProducts = () => {
                         disabled={isUploadingImage}
                         className="w-full p-2 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer disabled:opacity-50" 
                       />
-                      {isUploadingImage && <p className="text-xs text-emerald-600 mt-1 font-bold animate-pulse">Subiendo imagen a ImgBB...</p>}
+                      {isUploadingImage && <p className="text-xs text-emerald-600 mt-1 font-bold animate-pulse">Subiendo imagen al servidor...</p>}
                     </div>
                   </div>
-                  <input type="url" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="w-full mt-2 p-2 text-xs rounded-lg border border-slate-200 outline-none text-slate-400" placeholder="URL final (se llena automáticamente)" />
+                  <input 
+                    type="url" 
+                    value={formData.imageUrl} 
+                    onChange={e => setFormData({...formData, imageUrl: e.target.value})} 
+                    className="w-full mt-2 p-2 text-xs rounded-lg border border-slate-200 outline-none text-slate-600 focus:border-emerald-500" 
+                    placeholder="URL de la imagen (se completa al subir archivo o pega un link aquí)" 
+                  />
                 </div>
               </div>
               <div className="pt-4 flex justify-end gap-3">
@@ -324,7 +332,14 @@ export const AdminProducts = () => {
                   <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <img src={product.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=10b981&color=fff`} alt={product.name} className="w-12 h-12 rounded-xl object-cover bg-slate-100" />
+                        <img 
+                          src={product.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=10b981&color=fff`} 
+                          alt={product.name} 
+                          onError={(e) => {
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=10b981&color=fff`;
+                          }}
+                          className="w-12 h-12 rounded-xl object-cover bg-slate-100" 
+                        />
                         <div>
                           <p className="font-bold text-slate-800">{product.name}</p>
                           <p className="text-xs text-slate-500 truncate max-w-[200px]">{product.description}</p>

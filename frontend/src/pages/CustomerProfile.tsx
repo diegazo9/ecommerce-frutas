@@ -192,7 +192,14 @@ export const CustomerProfile = () => {
               <div className="space-y-3">
                 {order.items.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-4">
-                    <img src={item.product.imageUrl || `https://ui-avatars.com/api/?name=${item.product.name}`} alt={item.product.name} className="w-10 h-10 rounded-lg object-cover bg-slate-100" />
+                    <img 
+                      src={item.product.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.product.name)}&background=10b981&color=fff`} 
+                      alt={item.product.name} 
+                      onError={(e) => {
+                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.product.name)}&background=10b981&color=fff`;
+                      }}
+                      className="w-10 h-10 rounded-lg object-cover bg-slate-100" 
+                    />
                     <div className="flex-1">
                       <p className="font-bold text-slate-800 text-sm">{item.product.name}</p>
                       <p className="text-xs text-slate-500">

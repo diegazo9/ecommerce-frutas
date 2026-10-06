@@ -242,3 +242,17 @@ export const deleteCategory = async (id: number): Promise<void> => {
   });
   if (!response.ok) throw new Error('Error eliminando categoría');
 };
+
+export const uploadImage = async (base64Image: string): Promise<string> => {
+  const response = await fetch(`${API_URL}/upload`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ image: base64Image })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error subiendo imagen al servidor');
+  }
+  const data = await response.json();
+  return data.url;
+};

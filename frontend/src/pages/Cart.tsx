@@ -118,6 +118,9 @@ export const Cart = () => {
               <img 
                 src={item.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=10b981&color=fff`} 
                 alt={item.name} 
+                onError={(e) => {
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=10b981&color=fff`;
+                }}
                 className="w-24 h-24 rounded-2xl object-cover bg-slate-50"
               />
               <div className="flex-grow text-center sm:text-left">
