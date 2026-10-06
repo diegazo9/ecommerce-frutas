@@ -71,6 +71,16 @@ export const Home = () => {
   const citricosCat = categories.find(c => c?.name && (c.name.toLowerCase().includes('cítrico') || c.name.toLowerCase().includes('citrico')));
   const hojasCat = categories.find(c => c?.name && (c.name.toLowerCase().includes('hoja') || c.name.toLowerCase().includes('verdura')));
 
+  const getCategoryIcon = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes('combo') || n.includes('bolson') || n.includes('bolsón')) return '🧺';
+    if (n.includes('cítrico') || n.includes('citrico')) return '🍊';
+    if (n.includes('hoja') || n.includes('verdura')) return '🥗';
+    if (n.includes('hortaliza') || n.includes('raí')) return '🥕';
+    if (n.includes('exótica') || n.includes('exotica')) return '🥭';
+    return '🌿';
+  };
+
   const scrollToCatalog = (categoryId?: number | null) => {
     if (categoryId !== undefined) {
       setSelectedCategory(categoryId);
@@ -105,7 +115,7 @@ export const Home = () => {
       desc: 'El mix más completo y rendidor: manzanas crujientes, cítricos de jugo, hojas verdes frescas y papas de campo para toda la semana.',
       bgImage: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2000&auto=format&fit=crop',
       accentGradients: 'from-emerald-400/35 via-teal-300/25 to-amber-300/35',
-      btnPrimary: { text: 'Ver Catálogo Completo 🧺', onClick: () => scrollToCatalog(null) },
+      btnPrimary: { text: 'Ver Combos y Bolsones 🧺', to: '/combos' },
       btnSecondary: { text: 'Precios Mayoristas 📦', to: '/mayorista' }
     },
     {
@@ -185,16 +195,25 @@ export const Home = () => {
                   {slide.desc}
                 </p>
 
-                {/* Actions */}
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                  <button 
-                    type="button"
-                    onClick={slide.btnPrimary.onClick}
-                    className="btn-gradient text-white font-black text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-3 shadow-lg w-full sm:w-auto cursor-pointer hover:scale-102 active:scale-98 transition-all"
-                  >
-                    <span>{slide.btnPrimary.text}</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
+                  {slide.btnPrimary.to ? (
+                    <Link
+                      to={slide.btnPrimary.to}
+                      className="btn-gradient text-white font-black text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-3 shadow-lg w-full sm:w-auto cursor-pointer hover:scale-102 active:scale-98 transition-all"
+                    >
+                      <span>{slide.btnPrimary.text}</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </Link>
+                  ) : (
+                    <button 
+                      type="button"
+                      onClick={slide.btnPrimary.onClick}
+                      className="btn-gradient text-white font-black text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-3 shadow-lg w-full sm:w-auto cursor-pointer hover:scale-102 active:scale-98 transition-all"
+                    >
+                      <span>{slide.btnPrimary.text}</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+                  )}
                   <Link 
                     to={slide.btnSecondary.to}
                     className="bg-white/85 hover:bg-white text-emerald-800 hover:text-emerald-900 font-black text-sm sm:text-base px-7 py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-2 border border-emerald-200 shadow-sm transition-all w-full sm:w-auto hover:shadow-md"
@@ -327,7 +346,7 @@ export const Home = () => {
                   : 'bg-white text-slate-700 border border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700'
               }`}
             >
-              🌿 {cat.name}
+              {getCategoryIcon(cat.name)} {cat.name}
             </button>
           ))}
         </div>

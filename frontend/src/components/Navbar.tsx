@@ -46,6 +46,7 @@ export const Navbar = () => {
           <nav className="hidden lg:flex items-center space-x-1 xl:space-x-2">
             <Link to="/" className="text-xs font-black text-emerald-700 bg-emerald-50/80 px-3.5 py-2 rounded-xl transition-all uppercase tracking-wider hover:bg-emerald-100">Inicio</Link>
             <Link to="/productos" className="text-xs font-bold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/50 px-3.5 py-2 rounded-xl transition-all uppercase tracking-wider">Productos 🍉</Link>
+            <Link to="/combos" className="text-xs font-bold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/50 px-3.5 py-2 rounded-xl transition-all uppercase tracking-wider">Combos 🧺</Link>
             <Link to="/nosotros" className="text-xs font-bold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/50 px-3.5 py-2 rounded-xl transition-all uppercase tracking-wider">Nosotros 🌱</Link>
             <Link to="/envios" className="text-xs font-bold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/50 px-3.5 py-2 rounded-xl transition-all uppercase tracking-wider">Envíos 🛵</Link>
             <Link to="/mayorista" className="text-xs font-bold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/50 px-3.5 py-2 rounded-xl transition-all uppercase tracking-wider">Mayorista</Link>
@@ -116,6 +117,7 @@ export const Navbar = () => {
           
           <Link to="/" className="block px-4 py-2 text-sm font-bold text-red-600 uppercase" onClick={toggleMenu}>Inicio</Link>
           <Link to="/productos" className="block px-4 py-2 text-sm font-bold text-slate-600 uppercase" onClick={toggleMenu}>Productos</Link>
+          <Link to="/combos" className="block px-4 py-2 text-sm font-bold text-emerald-600 uppercase" onClick={toggleMenu}>Combos y Bolsones 🧺</Link>
           <Link to="/nosotros" className="block px-4 py-2 text-sm font-bold text-slate-600 uppercase" onClick={toggleMenu}>Nosotros</Link>
           <Link to="/envios" className="block px-4 py-2 text-sm font-bold text-slate-600 uppercase" onClick={toggleMenu}>Envíos y Zonas</Link>
           <Link to="/mayorista" className="block px-4 py-2 text-sm font-bold text-slate-600 uppercase" onClick={toggleMenu}>Mayorista</Link>

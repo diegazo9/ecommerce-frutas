@@ -7,6 +7,7 @@ import { About } from './pages/About';
 import { Shipping } from './pages/Shipping';
 import { Wholesale } from './pages/Wholesale';
 import { Recipes } from './pages/Recipes';
+import { Combos } from './pages/Combos';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { AdminLayout } from './components/AdminLayout';
@@ -29,6 +30,7 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="productos" element={<Products />} />
+              <Route path="combos" element={<Combos />} />
               <Route path="nosotros" element={<About />} />
               <Route path="envios" element={<Shipping />} />
               <Route path="mayorista" element={<Wholesale />} />
