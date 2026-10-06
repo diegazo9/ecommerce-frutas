@@ -1,14 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import dotenv from 'dotenv';
+import path from 'path';
 
-process.env.DATABASE_URL = 'postgresql://ecommerce:Faby1503%23@192.168.3.50:5432/ecommerce';
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: 'postgresql://ecommerce:Faby1503%23@192.168.3.50:5432/ecommerce'
-    }
-  }
-});
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('Connecting to PostgreSQL on Proxmox...');

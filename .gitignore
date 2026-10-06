@@ -4,3 +4,6 @@ dist
 .env.local
 .DS_Store
 *.log
+repomix-output.*
+backend/uploads/*
+!backend/uploads/.gitkeep
