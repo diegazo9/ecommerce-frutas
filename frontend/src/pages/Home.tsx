@@ -11,6 +11,10 @@ export const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const totalSlides = 4;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -19,8 +23,8 @@ export const Home = () => {
           getProducts(),
           getCategories()
         ]);
-        setProducts(prodData);
-        setCategories(catData);
+        setProducts(prodData || []);
+        setCategories(catData || []);
       } catch (err) {
         setError('Error al cargar los productos de primavera. Por favor, intenta de nuevo.');
       } finally {
@@ -31,9 +35,13 @@ export const Home = () => {
     fetchData();
   }, []);
 
-  const filteredProducts = selectedCategory === null 
-    ? products 
-    : products.filter(p => p.categoryId === selectedCategory);
+  useEffect(() => {
+    if (isPaused) return;
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % totalSlides);
+    }, 5500);
+    return () => clearInterval(interval);
+  }, [isPaused]);
 
   if (loading) {
     return (
@@ -56,11 +64,12 @@ export const Home = () => {
     );
   }
 
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const filteredProducts = selectedCategory === null 
+    ? products 
+    : products.filter(p => p.categoryId === selectedCategory);
 
-  const citricosCat = categories.find(c => c.name.toLowerCase().includes('cítrico') || c.name.toLowerCase().includes('citrico'));
-  const hojasCat = categories.find(c => c.name.toLowerCase().includes('hoja') || c.name.toLowerCase().includes('verdura'));
+  const citricosCat = categories.find(c => c?.name && (c.name.toLowerCase().includes('cítrico') || c.name.toLowerCase().includes('citrico')));
+  const hojasCat = categories.find(c => c?.name && (c.name.toLowerCase().includes('hoja') || c.name.toLowerCase().includes('verdura')));
 
   const scrollToCatalog = (categoryId?: number | null) => {
     if (categoryId !== undefined) {
@@ -126,14 +135,6 @@ export const Home = () => {
       btnSecondary: { text: 'Zonas de Entrega 🛵', to: '/envios' }
     }
   ];
-
-  useEffect(() => {
-    if (isPaused) return;
-    const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % slides.length);
-    }, 5500);
-    return () => clearInterval(interval);
-  }, [isPaused, slides.length]);
 
   return (
     <div className="pb-20">
