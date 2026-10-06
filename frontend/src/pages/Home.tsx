@@ -87,13 +87,19 @@ export const Home = () => {
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <a 
-              href="#catalogo" 
-              className="btn-gradient text-white font-black text-base sm:text-lg px-8 py-4 rounded-full flex items-center justify-center gap-3 shadow-lg w-full sm:w-auto"
+            <button 
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('catalogo');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              className="btn-gradient text-white font-black text-base sm:text-lg px-8 py-4 rounded-full flex items-center justify-center gap-3 shadow-lg w-full sm:w-auto cursor-pointer hover:scale-102 active:scale-98 transition-all"
             >
               <span>Explorar Frutería 🍓</span>
               <ArrowRight className="w-5 h-5" />
-            </a>
+            </button>
             <Link 
               to="/envios" 
               className="bg-white/80 hover:bg-white text-emerald-800 hover:text-emerald-900 font-black text-base sm:text-lg px-7 py-4 rounded-full flex items-center justify-center gap-2 border border-emerald-200 shadow-sm transition-all w-full sm:w-auto hover:shadow-md"
