@@ -34,7 +34,20 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const calculatedPrice = Number(product.price) * selectedOption.factor;
 
   const handleAddToCart = () => {
-    addToCart(product, selectedOption.factor, selectedOption.desc);
+    const isUnit = selectedOption.id === 'unidad' || !isKiloProduct;
+    const factor = isKiloProduct ? (selectedOption.id === 'unidad' ? 0.25 : 0.5) : 1.0;
+    const count = isKiloProduct 
+      ? (selectedOption.id === 'unidad' ? 1 : Math.round(selectedOption.factor / 0.5))
+      : Math.round(selectedOption.factor);
+
+    addToCart(
+      product, 
+      selectedOption.factor, 
+      selectedOption.desc, 
+      isUnit ? 'unit' : 'kg',
+      count,
+      factor
+    );
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };

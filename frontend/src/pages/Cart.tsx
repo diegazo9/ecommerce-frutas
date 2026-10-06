@@ -7,7 +7,7 @@ import { getShippingZones, API_URL } from '../services/api';
 import type { ShippingZone } from '../services/api';
 
 export const Cart = () => {
-  const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
+  const { cartItems, removeFromCart, increaseItem, decreaseItem, cartTotal, clearCart } = useCart();
   const { isAuthenticated, token } = useAuth();
   const navigate = useNavigate();
   
@@ -131,7 +131,10 @@ export const Cart = () => {
                 )}
                 <h3 className="text-xl font-bold text-slate-800">{item.name}</h3>
                 <p className="text-slate-400 text-sm font-medium">
-                  ${Number(item.price).toFixed(2)} / {item.unit}
+                  {item.purchaseMode === 'unit' && item.unit === 'kg' 
+                    ? `$${(Number(item.price) * (item.unitFactor || 0.25)).toFixed(2)} / unid. (aprox. 250g)`
+                    : `$${Number(item.price).toFixed(2)} / ${item.unit || 'kg'}`
+                  }
                 </p>
                 <p className="text-emerald-600 font-black text-lg mt-0.5">
                   Subtotal: ${(Number(item.price) * item.cartQuantity).toFixed(2)}
@@ -140,23 +143,25 @@ export const Cart = () => {
               <div className="flex items-center gap-4">
                 <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200">
                   <button 
-                    onClick={() => {
-                      const step = item.unit === 'kg' ? 0.5 : 1;
-                      updateQuantity(item.id, Number((item.cartQuantity - step).toFixed(2)));
-                    }} 
+                    onClick={() => decreaseItem(item.id)} 
                     className="p-2 text-slate-500 hover:text-emerald-600 transition-colors"
                     title="Disminuir"
                   >
                     <Minus className="w-5 h-5" />
                   </button>
-                  <span className="min-w-[60px] text-center font-bold text-sm text-slate-800 px-1">
-                    {item.cartQuantity === 0.5 ? '1/2 kg' : `${item.cartQuantity} ${item.unit || 'kg'}`}
+                  <span className="min-w-[70px] text-center font-bold text-sm text-slate-800 px-2">
+                    {(() => {
+                      const isUnit = item.purchaseMode === 'unit' || item.formatLabel?.toLowerCase().includes('unid') || item.unit === 'und';
+                      if (isUnit) {
+                        const factor = item.unitFactor || (item.unit === 'kg' ? 0.25 : 1.0);
+                        const count = item.unitCount || Math.max(1, Math.round(item.cartQuantity / factor));
+                        return `${count} unid.`;
+                      }
+                      return item.cartQuantity === 0.5 ? '1/2 kg' : `${item.cartQuantity} kg`;
+                    })()}
                   </span>
                   <button 
-                    onClick={() => {
-                      const step = item.unit === 'kg' ? 0.5 : 1;
-                      updateQuantity(item.id, Number((item.cartQuantity + step).toFixed(2)));
-                    }} 
+                    onClick={() => increaseItem(item.id)} 
                     className="p-2 text-slate-500 hover:text-emerald-600 transition-colors"
                     title="Aumentar"
                   >
