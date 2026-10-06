@@ -140,12 +140,22 @@ export const AdminProducts = () => {
         categoryId: Number(formData.categoryId)
       };
 
+      const selectedCatObj = categories.find(c => c.id === Number(formData.categoryId));
+
       if (editingProductId) {
         const updated = await updateProduct(editingProductId, payload);
-        setProducts(products.map(p => p.id === editingProductId ? updated : p));
+        const productWithCategory = {
+          ...updated,
+          category: updated.category || selectedCatObj
+        };
+        setProducts(products.map(p => p.id === editingProductId ? productWithCategory : p));
       } else {
         const newProduct = await createProduct(payload);
-        setProducts([...products, newProduct]);
+        const productWithCategory = {
+          ...newProduct,
+          category: newProduct.category || selectedCatObj
+        };
+        setProducts([...products, productWithCategory]);
       }
 
       setIsModalOpen(false);
@@ -348,7 +358,7 @@ export const AdminProducts = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-100">
-                        {product.category?.name || `Cat: ${product.categoryId}`}
+                        {categories.find(c => c.id === product.categoryId)?.name || product.category?.name || `Cat: ${product.categoryId}`}
                       </span>
                     </td>
                     <td className="px-6 py-4">

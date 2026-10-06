@@ -74,7 +74,8 @@ export const createProduct = async (req: Request, res: Response) => {
         unit: unit || 'kg',
         categoryId: Number(categoryId),
         imageUrl
-      }
+      },
+      include: { category: true }
     });
     res.status(201).json(product);
   } catch (error) {
@@ -101,7 +102,8 @@ export const updateProduct = async (req: Request, res: Response) => {
         unit,
         categoryId: categoryId ? Number(categoryId) : undefined,
         imageUrl
-      }
+      },
+      include: { category: true }
     });
     res.json(product);
   } catch (error) {
