@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { getProducts, getCategories } from '../services/api';
 import type { Product, Category } from '../services/api';
-import { Loader2, ArrowRight, Sun, Truck, ShieldCheck, Sparkles, Sprout } from 'lucide-react';
+import { Loader2, ArrowRight, Sun, Truck, ShieldCheck, Sparkles, Sprout, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Home = () => {
@@ -56,57 +56,192 @@ export const Home = () => {
     );
   }
 
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const citricosCat = categories.find(c => c.name.toLowerCase().includes('cítrico') || c.name.toLowerCase().includes('citrico'));
+  const hojasCat = categories.find(c => c.name.toLowerCase().includes('hoja') || c.name.toLowerCase().includes('verdura'));
+
+  const scrollToCatalog = (categoryId?: number | null) => {
+    if (categoryId !== undefined) {
+      setSelectedCategory(categoryId);
+    }
+    const el = document.getElementById('catalogo');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const slides = [
+    {
+      id: 1,
+      badgeText: 'TEMPORADA PRIMAVERA 2026',
+      badgeSub: 'COSECHA DEL DÍA 🍓',
+      badgeIcon: '🌸',
+      title: 'Frutas del Huerto,',
+      highlight: 'Llenas de Sol y Alegría 🌻',
+      desc: 'Descubre los sabores más dulces, jugosos y radiantes de la estación. Directo de la planta a tu hogar, con aroma y frescura insuperables.',
+      bgImage: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=2000&auto=format&fit=crop',
+      accentGradients: 'from-amber-300/35 via-rose-300/25 to-emerald-300/35',
+      btnPrimary: { text: 'Explorar Frutería 🍓', onClick: () => scrollToCatalog(null) },
+      btnSecondary: { text: 'Zonas de Entrega 🛵', to: '/envios' }
+    },
+    {
+      id: 2,
+      badgeText: 'COMBO HUERTO FAMILIAR',
+      badgeSub: '¡AHORRÁ HASTA 25%! 🧺',
+      badgeIcon: '🧺',
+      title: 'Bolsón Huerto Familiar,',
+      highlight: 'Frutas y Verduras Frescas 🥑',
+      desc: 'El mix más completo y rendidor: manzanas crujientes, cítricos de jugo, hojas verdes frescas y papas de campo para toda la semana.',
+      bgImage: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2000&auto=format&fit=crop',
+      accentGradients: 'from-emerald-400/35 via-teal-300/25 to-amber-300/35',
+      btnPrimary: { text: 'Ver Catálogo Completo 🧺', onClick: () => scrollToCatalog(null) },
+      btnSecondary: { text: 'Precios Mayoristas 📦', to: '/mayorista' }
+    },
+    {
+      id: 3,
+      badgeText: 'PACK ENERGÍA & VITALIDAD',
+      badgeSub: 'VITAMINA C PURA ⚡',
+      badgeIcon: '🍊',
+      title: 'Pack Jugos y Cítricos,',
+      highlight: 'Naranjas, Limones y Pomelos 🍹',
+      desc: 'Naranjas de zumo extra jugosas, pomelos rosados refrescantes y limones aromáticos para comenzar el día con máxima vitalidad.',
+      bgImage: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?q=80&w=2000&auto=format&fit=crop',
+      accentGradients: 'from-orange-400/35 via-amber-300/30 to-yellow-300/35',
+      btnPrimary: { text: 'Ver Cítricos de Huerta 🍊', onClick: () => scrollToCatalog(citricosCat ? citricosCat.id : null) },
+      btnSecondary: { text: 'Recetas con Cítricos 🍹', to: '/recetas' }
+    },
+    {
+      id: 4,
+      badgeText: 'PACK VERDE SALUDABLE',
+      badgeSub: '100% ORGÁNICO 🌱',
+      badgeIcon: '🥗',
+      title: 'Bolsón Hojas Verdes,',
+      highlight: 'Espinaca, Rúcula y Acelga 🌿',
+      desc: 'Hojas tiernas y crujientes ricas en hierro, cosechadas esta mañana y listas para tus mejores ensaladas de huerto.',
+      bgImage: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=2000&auto=format&fit=crop',
+      accentGradients: 'from-emerald-500/35 via-green-300/30 to-lime-300/35',
+      btnPrimary: { text: 'Ver Verduras de Hoja 🥗', onClick: () => scrollToCatalog(hojasCat ? hojasCat.id : null) },
+      btnSecondary: { text: 'Zonas de Entrega 🛵', to: '/envios' }
+    }
+  ];
+
+  useEffect(() => {
+    if (isPaused) return;
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % slides.length);
+    }, 5500);
+    return () => clearInterval(interval);
+  }, [isPaused, slides.length]);
+
   return (
     <div className="pb-20">
-      {/* Spring Joyful Hero Section */}
-      <div className="relative rounded-[3rem] overflow-hidden mb-12 shadow-2xl border-4 border-white/60 bg-spring-hero">
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-300/30 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-rose-300/30 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-25 pointer-events-none"></div>
-        
-        <div className="relative z-10 px-6 sm:px-12 py-16 sm:py-24 md:py-28 flex flex-col items-center text-center max-w-4xl mx-auto">
-          {/* Spring Badge */}
-          <div className="inline-flex items-center gap-2 py-2 px-5 rounded-full bg-white/90 backdrop-blur-md text-emerald-800 font-black text-xs sm:text-sm mb-6 border border-emerald-200 shadow-sm animate-spring">
-            <span>🌸</span>
-            <span>TEMPORADA PRIMAVERA 2026</span>
-            <span>·</span>
-            <span className="text-rose-600">COSECHA DEL DÍA 🍓</span>
-          </div>
+      {/* Dynamic Rotating Banner / Combos Hero Carousel */}
+      <div 
+        className="relative rounded-[3rem] overflow-hidden mb-12 shadow-2xl border-4 border-white/60 min-h-[500px] sm:min-h-[520px] md:min-h-[540px] flex items-center bg-spring-hero"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        {/* Slides */}
+        {slides.map((slide, index) => {
+          const isActive = currentSlide === index;
+          return (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-all duration-700 ease-out flex items-center justify-center ${
+                isActive 
+                  ? 'opacity-100 scale-100 z-10 pointer-events-auto' 
+                  : 'opacity-0 scale-95 z-0 pointer-events-none'
+              }`}
+            >
+              {/* Background image & gradient overlay */}
+              <div 
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 ease-out mix-blend-overlay opacity-30"
+                style={{ backgroundImage: `url('${slide.bgImage}')` }}
+              />
+              <div className={`absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br ${slide.accentGradients} rounded-full blur-3xl pointer-events-none`} />
+              <div className={`absolute -bottom-24 -left-24 w-96 h-96 bg-gradient-to-tr ${slide.accentGradients} rounded-full blur-3xl pointer-events-none`} />
 
-          {/* Heading */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-slate-900 tracking-tight mb-6 leading-[1.1]">
-            Frutas del Huerto, <br/>
-            <span className="text-gradient">Llenas de Sol y Alegría 🌻</span>
-          </h1>
+              {/* Slide Content */}
+              <div className="relative z-10 px-8 sm:px-16 py-14 sm:py-20 md:py-24 flex flex-col items-center text-center max-w-4xl mx-auto">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 py-2 px-5 rounded-full bg-white/95 backdrop-blur-md text-emerald-800 font-black text-xs sm:text-sm mb-6 border border-emerald-200 shadow-sm animate-spring">
+                  <span>{slide.badgeIcon}</span>
+                  <span>{slide.badgeText}</span>
+                  <span>·</span>
+                  <span className="text-rose-600">{slide.badgeSub}</span>
+                </div>
 
-          {/* Description */}
-          <p className="text-base sm:text-xl md:text-2xl text-slate-700 font-medium mb-10 max-w-2xl leading-relaxed">
-            Descubre los sabores más dulces, jugosos y radiantes de la estación. 
-            Directo de la planta a tu hogar, con aroma y frescura insuperables.
-          </p>
+                {/* Heading */}
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight mb-5 leading-[1.15]">
+                  {slide.title} <br/>
+                  <span className="text-gradient">{slide.highlight}</span>
+                </h1>
 
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <button 
+                {/* Description */}
+                <p className="text-sm sm:text-lg md:text-xl text-slate-700 font-medium mb-8 max-w-2xl leading-relaxed">
+                  {slide.desc}
+                </p>
+
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                  <button 
+                    type="button"
+                    onClick={slide.btnPrimary.onClick}
+                    className="btn-gradient text-white font-black text-sm sm:text-base px-8 py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-3 shadow-lg w-full sm:w-auto cursor-pointer hover:scale-102 active:scale-98 transition-all"
+                  >
+                    <span>{slide.btnPrimary.text}</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                  <Link 
+                    to={slide.btnSecondary.to}
+                    className="bg-white/85 hover:bg-white text-emerald-800 hover:text-emerald-900 font-black text-sm sm:text-base px-7 py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-2 border border-emerald-200 shadow-sm transition-all w-full sm:w-auto hover:shadow-md"
+                  >
+                    <span>{slide.btnSecondary.text}</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Navigation Arrow: Prev */}
+        <button
+          type="button"
+          onClick={() => setCurrentSlide(prev => (prev - 1 + slides.length) % slides.length)}
+          className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/80 hover:bg-white text-slate-700 hover:text-emerald-700 shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 backdrop-blur-md border border-white/60 cursor-pointer"
+          aria-label="Slide anterior"
+        >
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+
+        {/* Navigation Arrow: Next */}
+        <button
+          type="button"
+          onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)}
+          className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/80 hover:bg-white text-slate-700 hover:text-emerald-700 shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 backdrop-blur-md border border-white/60 cursor-pointer"
+          aria-label="Siguiente slide"
+        >
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+        </button>
+
+        {/* Bottom Pagination Dots */}
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-white/65 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/80 shadow-md">
+          {slides.map((s, idx) => (
+            <button
+              key={s.id}
               type="button"
-              onClick={() => {
-                const el = document.getElementById('catalogo');
-                if (el) {
-                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              }}
-              className="btn-gradient text-white font-black text-base sm:text-lg px-8 py-4 rounded-full flex items-center justify-center gap-3 shadow-lg w-full sm:w-auto cursor-pointer hover:scale-102 active:scale-98 transition-all"
-            >
-              <span>Explorar Frutería 🍓</span>
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <Link 
-              to="/envios" 
-              className="bg-white/80 hover:bg-white text-emerald-800 hover:text-emerald-900 font-black text-base sm:text-lg px-7 py-4 rounded-full flex items-center justify-center gap-2 border border-emerald-200 shadow-sm transition-all w-full sm:w-auto hover:shadow-md"
-            >
-              <span>Zonas de Entrega 🛵</span>
-            </Link>
-          </div>
+              onClick={() => setCurrentSlide(idx)}
+              className={`transition-all duration-300 rounded-full h-2.5 sm:h-3 cursor-pointer ${
+                currentSlide === idx
+                  ? 'w-7 sm:w-9 bg-emerald-600 shadow-xs'
+                  : 'w-2.5 sm:w-3 bg-slate-300 hover:bg-slate-400'
+              }`}
+              title={`Ir a ${s.badgeText}`}
+              aria-label={`Slide ${idx + 1}`}
+            />
+          ))}
         </div>
       </div>
 
