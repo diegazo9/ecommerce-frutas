@@ -68,14 +68,31 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
 
     if (!userId) return res.status(401).json({ error: 'Debes iniciar sesión para comprar' });
 
-    const { paymentMethod, cashChangeNote } = req.body;
+    const { 
+      paymentMethod, 
+      cashChangeNote, 
+      orderNotes, 
+      buyerDocType, 
+      buyerDocNumber 
+    } = req.body;
 
     // Determinar estado inicial según método de pago
     let initialStatus = 'PENDIENTE';
     if (paymentMethod === 'cash') {
       initialStatus = 'PAGO_EN_EFECTIVO';
-    } else if (paymentMethod === 'modo') {
+    } else if (paymentMethod === 'modo' || paymentMethod === 'transfer') {
       initialStatus = 'PENDIENTE_MODO';
+    }
+
+    // Concatenar notas de entrega, documento del comprador y cambio en efectivo si corresponden
+    let formattedAddress = deliveryAddress || (shippingZoneId ? '' : 'Retiro en Local');
+    const extraDetails: string[] = [];
+    if (buyerDocNumber) extraDetails.push(`Doc: ${buyerDocType || 'DNI'} ${buyerDocNumber}`);
+    if (orderNotes?.trim()) extraDetails.push(`Nota: ${orderNotes.trim()}`);
+    if (cashChangeNote?.trim()) extraDetails.push(`Efectivo: ${cashChangeNote.trim()}`);
+
+    if (extraDetails.length > 0) {
+      formattedAddress = formattedAddress ? `${formattedAddress} | ${extraDetails.join(' | ')}` : extraDetails.join(' | ');
     }
 
     const order = await prisma.order.create({
@@ -85,9 +102,7 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
         status: initialStatus,
         deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
         deliveryTimeRange: deliveryTimeRange || null,
-        deliveryAddress: deliveryAddress 
-          ? (cashChangeNote ? `${deliveryAddress} (Efectivo: ${cashChangeNote})` : deliveryAddress)
-          : (cashChangeNote ? `(Efectivo: ${cashChangeNote})` : null),
+        deliveryAddress: formattedAddress || null,
         shippingZoneId: shippingZoneId || null,
         items: {
           create: orderItemsData
@@ -106,18 +121,20 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
       });
     }
 
-    // Si es pago mediante MODO / Transferencia bancaria
-    if (paymentMethod === 'modo') {
+    // Si es pago mediante MODO o Transferencia bancaria
+    if (paymentMethod === 'modo' || paymentMethod === 'transfer') {
       return res.status(201).json({
         orderId: order.id,
-        paymentMethod: 'modo',
+        paymentMethod,
         status: order.status,
         total,
-        message: 'Pedido registrado con éxito para abonar con MODO o Transferencia bancaria.'
+        message: paymentMethod === 'modo'
+          ? 'Pedido registrado con éxito para abonar con MODO o App bancaria.'
+          : 'Pedido registrado con éxito para abonar mediante Transferencia bancaria.'
       });
     }
 
-    // Si es Mercado Pago: restringir preferencia a Dinero en Cuenta, Transferencia y QR
+    // Si es Tarjeta de crédito/débito o Mercado Pago
     const baseUrl = req.get('origin') || 'http://localhost:5173';
     let preferenceId = 'simulated_id';
     let initPoint = `${baseUrl}/#/profile`; 
@@ -130,11 +147,9 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
           metadata: { orderId: order.id },
           payment_methods: {
             excluded_payment_types: [
-              { id: 'credit_card' },
-              { id: 'debit_card' },
               { id: 'ticket' }
             ],
-            installments: 1
+            installments: 12
           },
           back_urls: {
             success: baseUrl, 
@@ -153,7 +168,7 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
     // Devolver el ID de preferencia y la URL
     res.status(201).json({ 
       orderId: order.id, 
-      paymentMethod: 'mercadopago',
+      paymentMethod: paymentMethod || 'card',
       preferenceId, 
       initPoint 
     });
@@ -382,11 +397,9 @@ export const payOrderWithMercadoPago = async (req: AuthRequest, res: Response) =
         metadata: { orderId: order.id },
         payment_methods: {
           excluded_payment_types: [
-            { id: 'credit_card' },
-            { id: 'debit_card' },
             { id: 'ticket' }
           ],
-          installments: 1
+          installments: 12
         },
         back_urls: {
           success: baseUrl,

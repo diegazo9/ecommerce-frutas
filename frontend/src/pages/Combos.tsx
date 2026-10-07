@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ProductCard } from '../components/ProductCard';
+import { ComboDetailModal } from '../components/ComboDetailModal';
 import { getProducts, getCategories } from '../services/api';
 import type { Product, Category } from '../services/api';
 import { Loader2, Sparkles, ShieldCheck, Truck, HeartHandshake, ArrowRight, MessageCircle } from 'lucide-react';
@@ -9,6 +10,7 @@ export const Combos = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCombo, setSelectedCombo] = useState<Product | null>(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -135,7 +137,12 @@ export const Combos = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {comboProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                onOpenDetail={setSelectedCombo}
+                allProducts={products}
+              />
             ))}
           </div>
         )}
@@ -170,6 +177,13 @@ export const Combos = () => {
           </Link>
         </div>
       </div>
+
+      {/* Ventana emergente (Modal) con el detalle del combo */}
+      <ComboDetailModal 
+        combo={selectedCombo} 
+        onClose={() => setSelectedCombo(null)} 
+        allProducts={products} 
+      />
     </div>
   );
 };

@@ -2,7 +2,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { 
   Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShoppingCart, 
-  Wallet, Smartphone, Banknote, CheckCircle, Copy, Check, MessageCircle, AlertCircle
+  CreditCard, QrCode, MessageSquare, ChevronDown, Coins,
+  CheckCircle, Copy, Check, MessageCircle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -29,17 +30,25 @@ export const Cart = () => {
   const [zones, setZones] = useState<ShippingZone[]>([]);
   const [selectedZoneId, setSelectedZoneId] = useState<number | ''>('');
 
-  // Formas de pago
-  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'modo' | 'cash'>('mercadopago');
+  // Formas de pago y notas
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'transfer' | 'modo' | 'cash'>('modo');
+  const [buyerDocType, setBuyerDocType] = useState('DNI');
+  const [buyerDocNumber, setBuyerDocNumber] = useState('19065906');
+  const [orderNotes, setOrderNotes] = useState('');
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [tempNotes, setTempNotes] = useState('');
   const [cashChangeNote, setCashChangeNote] = useState('');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [confirmedOrder, setConfirmedOrder] = useState<{
     orderId: number;
-    paymentMethod: 'mercadopago' | 'modo' | 'cash';
+    paymentMethod: 'card' | 'transfer' | 'modo' | 'cash';
     total: number;
     deliveryDate: string;
     deliveryTimeRange: string;
     deliveryAddress: string | null;
+    buyerDocType?: string;
+    buyerDocNumber?: string;
+    orderNotes?: string;
   } | null>(null);
 
   useEffect(() => {
@@ -49,6 +58,10 @@ export const Cart = () => {
   const selectedZone = zones.find(z => z.id === selectedZoneId);
   const shippingCost = selectedZone ? Number(selectedZone.price) : 0;
   const finalTotal = cartTotal + shippingCost;
+
+  const formatPriceAR = (val: number) => {
+    return val.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -93,7 +106,10 @@ export const Cart = () => {
           shippingZoneId: selectedZoneId === '' ? null : Number(selectedZoneId),
           deliveryAddress: selectedZoneId === '' ? null : deliveryAddress,
           paymentMethod,
-          cashChangeNote: paymentMethod === 'cash' ? cashChangeNote.trim() : undefined
+          cashChangeNote: paymentMethod === 'cash' ? cashChangeNote.trim() : undefined,
+          orderNotes: orderNotes.trim() || undefined,
+          buyerDocType: paymentMethod === 'modo' ? buyerDocType : undefined,
+          buyerDocNumber: paymentMethod === 'modo' ? buyerDocNumber.trim() : undefined
         })
       });
 
@@ -105,7 +121,7 @@ export const Cart = () => {
       const data = await response.json();
       clearCart();
 
-      if (paymentMethod === 'mercadopago') {
+      if (paymentMethod === 'card') {
         window.location.href = data.initPoint;
       } else {
         setConfirmedOrder({
@@ -114,7 +130,10 @@ export const Cart = () => {
           total: finalTotal,
           deliveryDate,
           deliveryTimeRange,
-          deliveryAddress: selectedZoneId === '' ? 'Retiro en Local' : deliveryAddress
+          deliveryAddress: selectedZoneId === '' ? 'Retiro en Local' : deliveryAddress,
+          buyerDocType: paymentMethod === 'modo' ? buyerDocType : undefined,
+          buyerDocNumber: paymentMethod === 'modo' ? buyerDocNumber.trim() : undefined,
+          orderNotes: orderNotes.trim() || undefined
         });
         setIsCheckingOut(false);
       }
@@ -283,90 +302,149 @@ export const Cart = () => {
               </div>
             </div>
 
-            {/* 2. SECCIÓN FORMAS DE PAGO */}
+            {/* NOTAS DE PEDIDO */}
+            <div className="pt-2 border-t border-slate-200">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-2.5 text-slate-800">
+                  <MessageSquare className="w-5 h-5 stroke-[1.75]" />
+                  <span className="text-sm font-semibold">Notas de pedido</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isEditingNotes) setTempNotes(orderNotes);
+                    setIsEditingNotes(!isEditingNotes);
+                  }}
+                  className="text-sm font-semibold text-slate-800 underline hover:text-slate-900 transition-colors"
+                >
+                  {orderNotes ? 'Editar' : 'Agregar'}
+                </button>
+              </div>
+
+              {/* Nota guardada */}
+              {orderNotes && !isEditingNotes && (
+                <div className="mt-1 p-3 bg-slate-100 rounded-xl text-xs text-slate-700 flex items-start justify-between gap-2 border border-slate-200">
+                  <p className="italic">"{orderNotes}"</p>
+                  <button
+                    type="button"
+                    onClick={() => { setOrderNotes(''); setTempNotes(''); }}
+                    className="text-slate-400 hover:text-red-500 text-xs font-semibold"
+                    title="Eliminar nota"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              )}
+
+              {/* Formulario para agregar / editar nota */}
+              {isEditingNotes && (
+                <div className="mt-2 space-y-2">
+                  <textarea
+                    rows={2}
+                    value={tempNotes}
+                    onChange={(e) => setTempNotes(e.target.value)}
+                    placeholder="Instrucciones especiales para tu pedido (ej: timbre no funciona, franja horaria preferida, maduración...)"
+                    className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingNotes(false)}
+                      className="px-3 py-1 text-xs text-slate-500 hover:text-slate-700 font-medium"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOrderNotes(tempNotes.trim());
+                        setIsEditingNotes(false);
+                      }}
+                      className="px-4 py-1 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold"
+                    >
+                      Guardar nota
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 2. SECCIÓN MEDIO DE PAGO */}
             <div>
-              <h3 className="text-xl font-black text-slate-800 mb-3">Forma de Pago</h3>
-              <div className="space-y-3">
+              <h3 className="text-xs uppercase tracking-wider font-bold text-slate-700 mb-2.5">
+                MEDIO DE PAGO
+              </h3>
+
+              {/* Contenedor Unificado de Métodos de Pago */}
+              <div className="bg-white rounded-xl border border-slate-300 overflow-hidden shadow-sm divide-y divide-slate-200">
                 
-                {/* Opción A: Mercado Pago */}
+                {/* 1. Tarjeta de crédito o débito */}
                 <div 
-                  onClick={() => setPaymentMethod('mercadopago')}
-                  className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    paymentMethod === 'mercadopago' 
-                      ? 'border-[#009ee3] bg-[#009ee3]/5 shadow-sm' 
-                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  onClick={() => setPaymentMethod('card')}
+                  className={`p-4 sm:p-5 flex items-center justify-between cursor-pointer transition-colors ${
+                    paymentMethod === 'card' ? 'bg-slate-50/50' : 'hover:bg-slate-50/30'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`p-2 rounded-xl ${paymentMethod === 'mercadopago' ? 'bg-[#009ee3] text-white' : 'bg-slate-100 text-slate-600'}`}>
-                        <Wallet className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                          Mercado Pago
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-[#0081b8]">Dinero en Cuenta & QR</span>
-                        </p>
-                        <p className="text-[11px] text-slate-500">Saldo MP y transferencia</p>
-                      </div>
-                    </div>
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      paymentMethod === 'mercadopago' ? 'border-[#009ee3] bg-[#009ee3]' : 'border-slate-300'
+                  <div className="flex items-center gap-3.5">
+                    <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+                      paymentMethod === 'card' 
+                        ? 'border-2 border-slate-900' 
+                        : 'border border-slate-400 bg-white'
                     }`}>
-                      {paymentMethod === 'mercadopago' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      {paymentMethod === 'card' && <div className="w-2 h-2 rounded-full bg-slate-900" />}
                     </div>
+                    <span className="text-sm font-medium text-slate-800">
+                      Tarjeta de crédito o débito
+                    </span>
                   </div>
-                  {paymentMethod === 'mercadopago' && (
-                    <div className="mt-2.5 pt-2 border-t border-blue-100 text-[11px] text-slate-600 flex items-start gap-1.5">
-                      <AlertCircle className="w-3.5 h-3.5 text-[#009ee3] shrink-0 mt-0.5" />
-                      <span>Solo acepta <strong>dinero en cuenta</strong> y transferencia bancaria/QR. Excluye tarjetas.</span>
-                    </div>
-                  )}
+                  <CreditCard className="w-5 h-5 text-slate-800 stroke-[1.5]" />
                 </div>
 
-                {/* Opción B: MODO / Transferencia Bancaria */}
-                <div 
-                  onClick={() => setPaymentMethod('modo')}
-                  className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    paymentMethod === 'modo' 
-                      ? 'border-purple-600 bg-purple-50/50 shadow-sm' 
-                      : 'border-slate-200 bg-white hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`p-2 rounded-xl ${paymentMethod === 'modo' ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                        <Smartphone className="w-4 h-4" />
+                {/* 2. Transferencia bancaria */}
+                <div>
+                  <div 
+                    onClick={() => setPaymentMethod('transfer')}
+                    className={`p-4 sm:p-5 flex items-center justify-between cursor-pointer transition-colors ${
+                      paymentMethod === 'transfer' ? 'bg-slate-50/50' : 'hover:bg-slate-50/30'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center mt-0.5 transition-all ${
+                        paymentMethod === 'transfer' 
+                          ? 'border-2 border-slate-900' 
+                          : 'border border-slate-400 bg-white'
+                      }`}>
+                        {paymentMethod === 'transfer' && <div className="w-2 h-2 rounded-full bg-slate-900" />}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                          MODO / Transferencia
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">Apps Bancarias</span>
-                        </p>
-                        <p className="text-[11px] text-slate-500">QR MODO y CBU / Alias</p>
+                        <span className="text-sm font-medium text-slate-800 block">
+                          Transferencia bancaria
+                        </span>
+                        <div className="mt-1 inline-block bg-[#bef264] text-[#14532d] text-[11px] font-bold px-2 py-0.5 rounded leading-tight">
+                          Pagás ${formatPriceAR(finalTotal)}
+                        </div>
                       </div>
                     </div>
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      paymentMethod === 'modo' ? 'border-purple-600 bg-purple-600' : 'border-slate-300'
-                    }`}>
-                      {paymentMethod === 'modo' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    {/* Icono de billete [$] */}
+                    <div className="w-7 h-4.5 border border-slate-800 rounded-sm flex items-center justify-center font-bold text-[11px] text-slate-800 tracking-tight leading-none px-1">
+                      $
                     </div>
                   </div>
 
-                  {paymentMethod === 'modo' && (
-                    <div className="mt-2.5 pt-2.5 border-t border-purple-100 space-y-2 text-xs">
+                  {paymentMethod === 'transfer' && (
+                    <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-2 text-xs">
                       <p className="text-slate-600 text-[11px] font-medium">
-                        Transferí con tu app bancaria (Galicia, Santander, BBVA, etc.) o MODO:
+                        Datos bancarios para transferir:
                       </p>
-                      <div className="bg-white p-2.5 rounded-xl border border-purple-200 space-y-1.5 text-[11px]">
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200 space-y-1.5 text-[11px]">
                         <div className="flex items-center justify-between">
                           <span className="text-slate-500">Alias:</span>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-mono font-bold text-purple-900">{MODO_ALIAS}</span>
+                            <span className="font-mono font-bold text-slate-800">{MODO_ALIAS}</span>
                             <button 
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handleCopy(MODO_ALIAS, 'alias'); }}
-                              className="text-purple-600 hover:text-purple-800 p-0.5 rounded hover:bg-purple-50"
+                              className="text-slate-600 hover:text-slate-900 p-0.5 rounded hover:bg-slate-100"
                               title="Copiar Alias"
                             >
                               {copiedField === 'alias' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -380,7 +458,7 @@ export const Cart = () => {
                             <button 
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handleCopy(MODO_CBU, 'cbu'); }}
-                              className="text-purple-600 hover:text-purple-800 p-0.5 rounded hover:bg-purple-50"
+                              className="text-slate-600 hover:text-slate-900 p-0.5 rounded hover:bg-slate-100"
                               title="Copiar CBU"
                             >
                               {copiedField === 'cbu' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -392,54 +470,119 @@ export const Cart = () => {
                           <span className="font-semibold text-slate-700">{MODO_HOLDER}</span>
                         </div>
                       </div>
-                      <p className="text-[10px] text-purple-700 font-medium">
+                      <p className="text-[10px] text-slate-500 font-medium">
                         * Al confirmar podrás enviar tu comprobante directamente por WhatsApp.
                       </p>
                     </div>
                   )}
                 </div>
 
-                {/* Opción C: Efectivo contra entrega */}
+                {/* 3. MODO o desde tu app bancaria */}
                 <div 
-                  onClick={() => setPaymentMethod('cash')}
-                  className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    paymentMethod === 'cash' 
-                      ? 'border-emerald-500 bg-emerald-50/50 shadow-sm' 
-                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  onClick={() => setPaymentMethod('modo')}
+                  className={`transition-all cursor-pointer ${
+                    paymentMethod === 'modo' 
+                      ? 'border-2 border-[#581c87] -m-[1px] relative z-10' 
+                      : 'hover:bg-slate-50/30'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`p-2 rounded-xl ${paymentMethod === 'cash' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                        <Banknote className="w-4 h-4" />
+                  <div className="p-4 sm:p-5 flex items-center justify-between">
+                    <div className="flex items-center gap-3.5">
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+                        paymentMethod === 'modo' 
+                          ? 'border-2 border-[#581c87]' 
+                          : 'border border-slate-400 bg-white'
+                      }`}>
+                        {paymentMethod === 'modo' && <div className="w-2 h-2 rounded-full bg-[#581c87]" />}
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                          Efectivo
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">Al recibir o retirar</span>
-                        </p>
-                        <p className="text-[11px] text-slate-500">Abonás al momento de la entrega</p>
-                      </div>
+                      <span className="text-sm font-medium text-slate-800">
+                        MODO o desde tu app bancaria
+                      </span>
                     </div>
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      paymentMethod === 'cash' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
-                    }`}>
-                      {paymentMethod === 'cash' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    {/* Icono de escáner QR */}
+                    <div className="text-slate-800">
+                      <QrCode className="w-5 h-5 stroke-[1.5]" />
                     </div>
                   </div>
 
+                  {/* Campos de Documento debajo de MODO */}
+                  {paymentMethod === 'modo' && (
+                    <div className="p-4 pt-0 bg-white" onClick={(e) => e.stopPropagation()}>
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                        {/* Tipo de documento */}
+                        <div className="sm:col-span-4 relative border border-slate-300 rounded-lg p-2.5 bg-white focus-within:border-slate-500">
+                          <label className="block text-[11px] text-slate-500 font-normal leading-tight mb-0.5">
+                            Tipo de documento
+                          </label>
+                          <select
+                            value={buyerDocType}
+                            onChange={(e) => setBuyerDocType(e.target.value)}
+                            className="w-full bg-transparent text-sm font-medium text-slate-800 outline-none cursor-pointer appearance-none pr-6"
+                          >
+                            <option value="DNI">DNI</option>
+                            <option value="CUIL">CUIL</option>
+                            <option value="Pasaporte">Pasaporte</option>
+                            <option value="CI">CI</option>
+                          </select>
+                          <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 bottom-3 pointer-events-none" />
+                        </div>
+
+                        {/* Documento del comprador */}
+                        <div className="sm:col-span-8 border border-slate-300 rounded-lg p-2.5 bg-white focus-within:border-slate-500">
+                          <label className="block text-[11px] text-slate-500 font-normal leading-tight mb-0.5">
+                            Documento del comprador
+                          </label>
+                          <input
+                            type="text"
+                            value={buyerDocNumber}
+                            onChange={(e) => setBuyerDocNumber(e.target.value)}
+                            placeholder="19065906"
+                            className="w-full bg-transparent text-sm font-medium text-slate-800 outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-3 bg-purple-50/70 p-2.5 rounded-xl border border-purple-100 text-[11px] text-purple-900 space-y-1">
+                        <p className="font-semibold">Pagá escaneando desde MODO, BNA+, Galicia, Santander, BBVA y más apps bancarias.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Efectivo contra entrega */}
+                <div>
+                  <div 
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`p-4 sm:p-5 flex items-center justify-between cursor-pointer transition-colors ${
+                      paymentMethod === 'cash' ? 'bg-slate-50/50' : 'hover:bg-slate-50/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+                        paymentMethod === 'cash' 
+                          ? 'border-2 border-slate-900' 
+                          : 'border border-slate-400 bg-white'
+                      }`}>
+                        {paymentMethod === 'cash' && <div className="w-2 h-2 rounded-full bg-slate-900" />}
+                      </div>
+                      <span className="text-sm font-medium text-slate-800">
+                        Efectivo contra entrega
+                      </span>
+                    </div>
+                    <Coins className="w-5 h-5 text-slate-800 stroke-[1.5]" />
+                  </div>
+
                   {paymentMethod === 'cash' && (
-                    <div className="mt-2.5 pt-2 border-t border-emerald-100 text-xs">
-                      <label className="block text-slate-700 font-bold mb-1 text-[11px]">
-                        ¿Con cuánto dinero vas a abonar? (Opcional)
+                    <div className="p-4 bg-slate-50 border-t border-slate-200" onClick={(e) => e.stopPropagation()}>
+                      <label className="block text-slate-600 font-medium mb-1 text-[11px]">
+                        ¿Con cuánto dinero vas a abonar? (Opcional para cambio)
                       </label>
                       <input 
                         type="text"
                         placeholder="Ej: $20.000 para preparar cambio exacto"
                         value={cashChangeNote}
                         onChange={(e) => setCashChangeNote(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-full p-2 bg-white border border-emerald-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-400 text-xs"
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-400 text-xs"
                       />
                     </div>
                   )}
@@ -471,17 +614,20 @@ export const Cart = () => {
               <button 
                 onClick={handleCheckout}
                 disabled={isCheckingOut}
-                className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg transition-all ${
+                className={`w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg transition-all ${
                   paymentMethod === 'modo'
-                    ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/30'
+                    ? 'bg-[#581c87] hover:bg-[#47156d] text-white shadow-purple-900/30'
+                    : paymentMethod === 'card'
+                    ? 'bg-[#009ee3] hover:bg-[#008ec9] text-white shadow-sky-600/30'
                     : 'btn-gradient text-white shadow-emerald-500/30'
                 }`}
               >
                 {isCheckingOut ? (
-                  paymentMethod === 'mercadopago' ? 'Conectando a Mercado Pago...' : 'Registrando pedido...'
+                  paymentMethod === 'card' ? 'Conectando a Mercado Pago...' : 'Registrando pedido...'
                 ) : (
-                  paymentMethod === 'mercadopago' ? 'Pagar con Mercado Pago' :
-                  paymentMethod === 'modo' ? 'Confirmar Pedido con MODO' :
+                  paymentMethod === 'card' ? 'Pagar con Tarjeta' :
+                  paymentMethod === 'transfer' ? 'Confirmar Pedido por Transferencia' :
+                  paymentMethod === 'modo' ? 'Pagar con MODO / App Bancaria' :
                   'Confirmar Pedido en Efectivo'
                 )}
                 {!isCheckingOut && <ArrowRight className="w-5 h-5" />}
@@ -498,7 +644,7 @@ export const Cart = () => {
         </div>
       </div>
 
-      {/* MODAL DE CONFIRMACIÓN DE PEDIDO (MODO / EFECTIVO) */}
+      {/* MODAL DE CONFIRMACIÓN DE PEDIDO */}
       {confirmedOrder && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
@@ -509,11 +655,17 @@ export const Cart = () => {
                 <CheckCircle className="w-10 h-10" />
               </div>
               <h3 className="text-2xl font-black text-slate-800">
-                {confirmedOrder.paymentMethod === 'modo' ? '¡Pedido Registrado con Éxito!' : '¡Pedido Confirmado con Éxito!'}
+                {confirmedOrder.paymentMethod === 'modo' 
+                  ? '¡Pedido Registrado con Éxito!' 
+                  : confirmedOrder.paymentMethod === 'transfer'
+                  ? '¡Pedido Registrado por Transferencia!'
+                  : '¡Pedido Confirmado con Éxito!'}
               </h3>
               <p className="text-slate-500 text-sm mt-1">
                 {confirmedOrder.paymentMethod === 'modo' 
-                  ? 'Tu pedido fue reservado. Realizá la transferencia o pago por MODO para confirmarlo.' 
+                  ? 'Tu pedido fue reservado. Realizá el pago por MODO o tu app bancaria para confirmarlo.' 
+                  : confirmedOrder.paymentMethod === 'transfer'
+                  ? 'Tu pedido fue reservado. Realizá la transferencia bancaria para confirmarlo.'
                   : 'Tu pedido ya fue tomado para abonar en efectivo contra entrega.'}
               </p>
             </div>
@@ -537,9 +689,21 @@ export const Cart = () => {
                   <span className="font-medium text-slate-800 text-right">{confirmedOrder.deliveryAddress}</span>
                 </div>
               )}
+              {confirmedOrder.buyerDocNumber && (
+                <div className="flex justify-between text-slate-600">
+                  <span className="font-medium">Documento:</span>
+                  <span className="font-medium text-slate-800">{confirmedOrder.buyerDocType || 'DNI'} {confirmedOrder.buyerDocNumber}</span>
+                </div>
+              )}
+              {confirmedOrder.orderNotes && (
+                <div className="flex justify-between text-slate-600">
+                  <span className="font-medium">Nota:</span>
+                  <span className="font-medium text-slate-800 italic">{confirmedOrder.orderNotes}</span>
+                </div>
+              )}
             </div>
 
-            {confirmedOrder.paymentMethod === 'modo' && (
+            {(confirmedOrder.paymentMethod === 'modo' || confirmedOrder.paymentMethod === 'transfer') && (
               <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4 mb-6 space-y-2 text-xs">
                 <p className="font-bold text-purple-900">Datos bancarios para abonar:</p>
                 <div className="flex justify-between items-center text-slate-700">
@@ -585,7 +749,9 @@ export const Cart = () => {
               <a
                 href={`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(
                   confirmedOrder.paymentMethod === 'modo'
-                    ? `Hola VibranFrut! Acabo de registrar el pedido #${confirmedOrder.orderId} por $${confirmedOrder.total.toFixed(2)} mediante MODO / Transferencia. Les adjunto el comprobante de pago.`
+                    ? `Hola VibranFrut! Acabo de registrar el pedido #${confirmedOrder.orderId} por $${confirmedOrder.total.toFixed(2)} mediante MODO / App bancaria (Doc: ${confirmedOrder.buyerDocType || 'DNI'} ${confirmedOrder.buyerDocNumber || ''}). Les adjunto el comprobante.`
+                    : confirmedOrder.paymentMethod === 'transfer'
+                    ? `Hola VibranFrut! Acabo de registrar el pedido #${confirmedOrder.orderId} por $${confirmedOrder.total.toFixed(2)} mediante Transferencia bancaria. Les adjunto el comprobante de pago.`
                     : `Hola VibranFrut! Acabo de confirmar el pedido #${confirmedOrder.orderId} por $${confirmedOrder.total.toFixed(2)} para abonar en efectivo al recibir.`
                 )}`}
                 target="_blank"
@@ -593,7 +759,7 @@ export const Cart = () => {
                 className="w-full bg-[#25D366] hover:bg-[#20ba5a] text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.01]"
               >
                 <MessageCircle className="w-5 h-5" />
-                {confirmedOrder.paymentMethod === 'modo' ? 'Enviar Comprobante por WhatsApp' : 'Avisar o Consultar por WhatsApp'}
+                {confirmedOrder.paymentMethod === 'cash' ? 'Avisar o Consultar por WhatsApp' : 'Enviar Comprobante por WhatsApp'}
               </a>
 
               <button
