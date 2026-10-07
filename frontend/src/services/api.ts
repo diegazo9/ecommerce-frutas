@@ -256,3 +256,44 @@ export const uploadImage = async (base64Image: string): Promise<string> => {
   const data = await response.json();
   return data.url;
 };
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  role: 'CUSTOMER' | 'ADMIN';
+  createdAt: string;
+  orderCount: number;
+  totalSpent: number;
+  recentOrders?: Array<{
+    id: number;
+    total: number;
+    status: string;
+    createdAt: string;
+  }>;
+}
+
+export const getAdminUsers = async (): Promise<AdminUser[]> => {
+  const response = await fetch(`${API_URL}/auth/users`, {
+    headers: getAuthHeaders()
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al obtener usuarios');
+  }
+  return response.json();
+};
+
+export const updateUserRole = async (id: number, role: 'CUSTOMER' | 'ADMIN'): Promise<AdminUser> => {
+  const response = await fetch(`${API_URL}/auth/users/${id}/role`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ role })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al actualizar rol del usuario');
+  }
+  return response.json();
+};
+

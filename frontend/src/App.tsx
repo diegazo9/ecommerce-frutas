@@ -17,6 +17,7 @@ import { AdminShipping } from './pages/AdminShipping';
 import { AdminOrders } from './pages/AdminOrders';
 import { AdminSettings } from './pages/AdminSettings';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminUsers } from './pages/AdminUsers';
 import { Login } from './pages/Login';
 import { CustomerProfile } from './pages/CustomerProfile';
 
@@ -46,8 +47,9 @@ function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="categories" element={<AdminCategories />} />
-              <Route path="shipping" element={<AdminShipping />} />
               <Route path="orders" element={<AdminOrders />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="shipping" element={<AdminShipping />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
           </Routes>

@@ -123,3 +123,74 @@ export const googleLogin = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Error al iniciar sesión con Google' });
   }
 };
+
+export const getUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        orders: {
+          select: {
+            id: true,
+            total: true,
+            status: true,
+            createdAt: true
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const formattedUsers = users.map(u => {
+      const totalSpent = u.orders.reduce((sum, o) => sum + Number(o.total), 0);
+      return {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        createdAt: u.createdAt,
+        orderCount: u.orders.length,
+        totalSpent,
+        recentOrders: u.orders.slice(0, 5)
+      };
+    });
+
+    res.json(formattedUsers);
+  } catch (error) {
+    console.error('Error al obtener lista de usuarios:', error);
+    res.status(500).json({ error: 'Error al obtener la lista de usuarios' });
+  }
+};
+
+export const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!['CUSTOMER', 'ADMIN'].includes(role)) {
+      return res.status(400).json({ error: 'Rol inválido. Debe ser CUSTOMER o ADMIN' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: Number(id) },
+      data: { role },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true
+      }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error al actualizar rol:', error);
+    res.status(500).json({ error: 'Error al actualizar el rol del usuario' });
+  }
+};
