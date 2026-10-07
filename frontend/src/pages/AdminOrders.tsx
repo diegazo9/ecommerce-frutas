@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getOrders, updateOrderStatus } from '../services/api';
 import type { Order } from '../services/api';
-import { Loader2, PackageOpen, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, PackageOpen, CheckCircle, Clock, Smartphone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const AdminOrders = () => {
@@ -71,6 +71,7 @@ export const AdminOrders = () => {
                 <td className="p-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1 ${
                     order.status === 'PENDIENTE' ? 'bg-amber-100 text-amber-700' :
+                    order.status === 'PENDIENTE_MODO' ? 'bg-purple-100 text-purple-700' :
                     order.status === 'PAGADO' ? 'bg-emerald-100 text-emerald-700' :
                     order.status === 'PAGO_EN_EFECTIVO' ? 'bg-cyan-100 text-cyan-800' :
                     order.status === 'EN_PREPARACION' ? 'bg-blue-100 text-blue-700' :
@@ -80,9 +81,12 @@ export const AdminOrders = () => {
                     'bg-slate-100 text-slate-700'
                   }`}>
                     {order.status === 'PENDIENTE' && <Clock className="w-3 h-3" />}
+                    {order.status === 'PENDIENTE_MODO' && <Smartphone className="w-3 h-3" />}
                     {order.status === 'EN_PREPARACION' && <PackageOpen className="w-3 h-3" />}
                     {order.status === 'ENTREGADO' && <CheckCircle className="w-3 h-3" />}
-                    {order.status === 'PAGO_EN_EFECTIVO' ? 'Efectivo al recibir' : order.status.replace(/_/g, ' ')}
+                    {order.status === 'PAGO_EN_EFECTIVO' ? 'Efectivo al recibir' : 
+                     order.status === 'PENDIENTE_MODO' ? 'Pendiente MODO / Transf.' : 
+                     order.status.replace(/_/g, ' ')}
                   </span>
                 </td>
                 <td className="p-4 text-right">
@@ -92,8 +96,9 @@ export const AdminOrders = () => {
                     className="p-2 border rounded-lg text-sm bg-white text-slate-700 outline-none font-medium"
                   >
                     <option value="PENDIENTE">Pendiente</option>
+                    <option value="PENDIENTE_MODO">Pendiente MODO / Transferencia</option>
                     <option value="PAGO_EN_EFECTIVO">Pago en Efectivo</option>
-                    <option value="PAGADO">Pagado (Mercado Pago)</option>
+                    <option value="PAGADO">Pagado (Mercado Pago / Transf.)</option>
                     <option value="EN_PREPARACION">En Preparación</option>
                     <option value="EN_CAMINO">En Camino</option>
                     <option value="ENTREGADO">Entregado</option>

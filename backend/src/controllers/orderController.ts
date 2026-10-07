@@ -68,14 +68,26 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
 
     if (!userId) return res.status(401).json({ error: 'Debes iniciar sesión para comprar' });
 
+    const { paymentMethod, cashChangeNote } = req.body;
+
+    // Determinar estado inicial según método de pago
+    let initialStatus = 'PENDIENTE';
+    if (paymentMethod === 'cash') {
+      initialStatus = 'PAGO_EN_EFECTIVO';
+    } else if (paymentMethod === 'modo') {
+      initialStatus = 'PENDIENTE_MODO';
+    }
+
     const order = await prisma.order.create({
       data: {
         userId,
         total,
-        status: 'PENDIENTE',
+        status: initialStatus,
         deliveryDate: deliveryDate ? new Date(deliveryDate) : null,
         deliveryTimeRange: deliveryTimeRange || null,
-        deliveryAddress: deliveryAddress || null,
+        deliveryAddress: deliveryAddress 
+          ? (cashChangeNote ? `${deliveryAddress} (Efectivo: ${cashChangeNote})` : deliveryAddress)
+          : (cashChangeNote ? `(Efectivo: ${cashChangeNote})` : null),
         shippingZoneId: shippingZoneId || null,
         items: {
           create: orderItemsData
@@ -83,7 +95,29 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
       }
     });
 
-    // Crear Preferencia en Mercado Pago (con fallback simulado)
+    // Si es pago en efectivo contra entrega
+    if (paymentMethod === 'cash') {
+      return res.status(201).json({
+        orderId: order.id,
+        paymentMethod: 'cash',
+        status: order.status,
+        total,
+        message: 'Pedido confirmado con éxito para abonar en efectivo al momento de la entrega.'
+      });
+    }
+
+    // Si es pago mediante MODO / Transferencia bancaria
+    if (paymentMethod === 'modo') {
+      return res.status(201).json({
+        orderId: order.id,
+        paymentMethod: 'modo',
+        status: order.status,
+        total,
+        message: 'Pedido registrado con éxito para abonar con MODO o Transferencia bancaria.'
+      });
+    }
+
+    // Si es Mercado Pago: restringir preferencia a Dinero en Cuenta, Transferencia y QR
     const baseUrl = req.get('origin') || 'http://localhost:5173';
     let preferenceId = 'simulated_id';
     let initPoint = `${baseUrl}/#/profile`; 
@@ -94,6 +128,14 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
         body: {
           items: preferenceItems,
           metadata: { orderId: order.id },
+          payment_methods: {
+            excluded_payment_types: [
+              { id: 'credit_card' },
+              { id: 'debit_card' },
+              { id: 'ticket' }
+            ],
+            installments: 1
+          },
           back_urls: {
             success: baseUrl, 
             failure: baseUrl,
@@ -106,13 +148,12 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
       initPoint = result.init_point!;
     } catch (mpError) {
       console.warn('⚠️ MercadoPago falló. Asegúrate de tener credenciales válidas y conexión a internet.', mpError);
-      // Opcional: si quieres que falle de verdad cuando MP falle, descomenta la siguiente línea:
-      // return res.status(500).json({ error: 'Error al conectar con Mercado Pago' });
     }
 
     // Devolver el ID de preferencia y la URL
     res.status(201).json({ 
       orderId: order.id, 
+      paymentMethod: 'mercadopago',
       preferenceId, 
       initPoint 
     });
@@ -339,6 +380,14 @@ export const payOrderWithMercadoPago = async (req: AuthRequest, res: Response) =
       body: {
         items: preferenceItems,
         metadata: { orderId: order.id },
+        payment_methods: {
+          excluded_payment_types: [
+            { id: 'credit_card' },
+            { id: 'debit_card' },
+            { id: 'ticket' }
+          ],
+          installments: 1
+        },
         back_urls: {
           success: baseUrl,
           failure: baseUrl,
