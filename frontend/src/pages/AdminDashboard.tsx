@@ -37,10 +37,10 @@ export const AdminDashboard = () => {
   const recentOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
 
   const stats = [
-    { label: 'Ingresos Totales', value: `$${totalIngresos.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'bg-emerald-500', trend: '+12.5%' },
-    { label: 'Ventas Activas', value: validOrders.length, icon: ShoppingBag, color: 'bg-blue-500', trend: '+5.2%' },
-    { label: 'Clientes Únicos', value: uniqueCustomers, icon: Users, color: 'bg-indigo-500', trend: '+18.1%' },
-    { label: 'Productos en Catálogo', value: products.length, icon: Package, color: 'bg-amber-500', trend: '0%' },
+    { label: 'Ingresos Totales', value: `$${totalIngresos.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'bg-emerald-500', trend: '+12.5%', to: '/admin/orders' },
+    { label: 'Ventas Activas', value: validOrders.length, icon: ShoppingBag, color: 'bg-blue-500', trend: '+5.2%', to: '/admin/orders' },
+    { label: 'Clientes Registrados', value: uniqueCustomers, icon: Users, color: 'bg-indigo-500', trend: 'Base de clientes', to: '/admin/users' },
+    { label: 'Productos en Catálogo', value: products.length, icon: Package, color: 'bg-amber-500', trend: 'Inventario', to: '/admin/products' },
   ];
 
   return (
@@ -55,18 +55,23 @@ export const AdminDashboard = () => {
       {/* Grid de Métricas Principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center justify-between group hover:-translate-y-1 transition-transform">
+          <Link 
+            key={i} 
+            to={stat.to}
+            className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer"
+          >
             <div>
               <p className="text-slate-500 font-bold text-sm mb-1">{stat.label}</p>
               <h3 className="text-2xl font-black text-slate-800">{stat.value}</h3>
-              <p className={`text-xs font-bold mt-2 ${stat.trend.startsWith('+') ? 'text-emerald-500' : 'text-slate-400'}`}>
-                {stat.trend} este mes
+              <p className={`text-xs font-bold mt-2 flex items-center gap-1 ${stat.trend.startsWith('+') ? 'text-emerald-500' : 'text-slate-400'}`}>
+                <span>{stat.trend}</span>
+                <span className="text-[10px] text-emerald-600 font-black opacity-0 group-hover:opacity-100 transition-opacity ml-1">Ver ➔</span>
               </p>
             </div>
-            <div className={`${stat.color} text-white p-4 rounded-2xl shadow-lg`}>
+            <div className={`${stat.color} text-white p-4 rounded-2xl shadow-lg group-hover:scale-105 transition-transform`}>
               <stat.icon className="w-6 h-6" />
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -121,6 +126,23 @@ export const AdminDashboard = () => {
           </h2>
           
           <div className="space-y-4">
+            {/* Acceso Directo a Clientes */}
+            <Link 
+              to="/admin/users" 
+              className="bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 rounded-2xl p-4 flex items-center justify-between transition-all group text-white hover:scale-[1.02]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-500 text-white p-3 rounded-xl shadow-md">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white">Gestionar Clientes</p>
+                  <p className="text-emerald-200/80 text-xs">Ver base de usuarios registrados</p>
+                </div>
+              </div>
+              <span className="text-emerald-300 font-black text-lg group-hover:translate-x-1 transition-transform">➔</span>
+            </Link>
+
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex items-center justify-between">
               <div>
                 <p className="text-slate-300 text-sm">Pedidos Pendientes</p>

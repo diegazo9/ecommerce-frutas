@@ -65,17 +65,21 @@ export const AdminUsers = () => {
     }
   };
 
-  const filteredUsers = users.filter(user => {
+  const userList = Array.isArray(users) ? users : [];
+
+  const filteredUsers = userList.filter(user => {
+    const name = user?.name || '';
+    const email = user?.email || '';
     const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
 
-  const totalCustomers = users.filter(u => u.role === 'CUSTOMER').length;
-  const customersWithOrders = users.filter(u => u.orderCount > 0).length;
-  const totalRevenue = users.reduce((sum, u) => sum + Number(u.totalSpent || 0), 0);
+  const totalCustomers = userList.filter(u => u.role === 'CUSTOMER').length;
+  const customersWithOrders = userList.filter(u => (u.orderCount || 0) > 0).length;
+  const totalRevenue = userList.reduce((sum, u) => sum + Number(u.totalSpent || 0), 0);
 
   if (loading) {
     return (

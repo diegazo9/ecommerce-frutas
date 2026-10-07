@@ -1,20 +1,14 @@
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, Link, Navigate, useLocation } from 'react-router-dom';
 import { Package, LogOut, LayoutDashboard, Settings, ShoppingBag, FolderTree, Truck, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useEffect } from 'react';
 
 export const AdminLayout = () => {
   const { user, logout, isAdmin } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    if (!isAdmin) {
-      navigate('/login');
-    }
-  }, [isAdmin, navigate]);
-
-  if (!isAdmin) return null;
+  if (!isAdmin) {
+    return <Navigate to="/login" replace />;
+  }
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
