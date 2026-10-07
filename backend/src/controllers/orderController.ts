@@ -354,3 +354,118 @@ export const payOrderWithMercadoPago = async (req: AuthRequest, res: Response) =
     res.status(500).json({ error: 'Error al generar preferencia de Mercado Pago' });
   }
 };
+
+export const getOrderFinances = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user?.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    // Tasa estándar estimada de Mercado Pago en Argentina (6.39% + IVA 21% = ~7.73%)
+    const defaultFeeRate = 0.0773;
+
+    // 1. Obtener pagos recientes directamente desde Mercado Pago si hay token activo
+    const mpPaymentsMap = new Map<number, any>();
+    try {
+      const paymentClient = new Payment(client);
+      const searchResult = await paymentClient.search({
+        options: {
+          sort: 'date_created',
+          criteria: 'desc',
+          limit: 100
+        }
+      });
+
+      if (searchResult.results && searchResult.results.length > 0) {
+        for (const p of searchResult.results) {
+          const orderId = Number(p.metadata?.order_id || p.external_reference);
+          if (orderId) {
+            mpPaymentsMap.set(orderId, p);
+          }
+        }
+      }
+    } catch (mpErr) {
+      console.warn('[Finanzas] No se pudo consultar la API de Mercado Pago directamente:', mpErr);
+    }
+
+    // 2. Obtener todas las órdenes registradas
+    const orders = await prisma.order.findMany({
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        shippingZone: { select: { id: true, name: true, price: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    let totalGross = 0;
+    let totalFees = 0;
+    let totalNet = 0;
+    let paidOrdersCount = 0;
+
+    const settlements = orders.map(order => {
+      const gross = Number(order.total);
+      const isPaid = ['PAGADO', 'ENTREGADO', 'EN_PREPARACION'].includes(order.status);
+      const mpData = mpPaymentsMap.get(order.id);
+
+      let feeAmount = 0;
+      let netAmount = gross;
+      let feeDetail = 'Mercado Pago (7.73% IVA incl.)';
+      let mpPaymentId = mpData?.id ? String(mpData.id) : null;
+      let paymentMethod = mpData?.payment_type_id || mpData?.payment_method_id || 'Mercado Pago';
+
+      if (mpData) {
+        const realNet = Number(mpData.net_received_amount);
+        const realGross = Number(mpData.transaction_amount) || gross;
+        if (!isNaN(realNet) && realNet > 0 && realNet <= realGross) {
+          netAmount = realNet;
+          feeAmount = Number((realGross - realNet).toFixed(2));
+          feeDetail = mpData.fee_details?.map((f: any) => `${f.type}: $${f.amount}`).join(', ') || 'Comisión Oficial MP';
+        } else {
+          feeAmount = Number((gross * defaultFeeRate).toFixed(2));
+          netAmount = Number((gross - feeAmount).toFixed(2));
+        }
+      } else {
+        feeAmount = Number((gross * defaultFeeRate).toFixed(2));
+        netAmount = Number((gross - feeAmount).toFixed(2));
+      }
+
+      if (isPaid) {
+        totalGross += gross;
+        totalFees += feeAmount;
+        totalNet += netAmount;
+        paidOrdersCount += 1;
+      }
+
+      return {
+        orderId: order.id,
+        mpPaymentId,
+        date: order.createdAt,
+        customerName: order.user?.name || 'Cliente',
+        customerEmail: order.user?.email || '',
+        status: order.status,
+        isPaid,
+        grossAmount: gross,
+        feeAmount,
+        netAmount,
+        feeDetail,
+        paymentMethod
+      };
+    });
+
+    res.json({
+      summary: {
+        totalGross: Number(totalGross.toFixed(2)),
+        totalFees: Number(totalFees.toFixed(2)),
+        totalNet: Number(totalNet.toFixed(2)),
+        paidOrdersCount,
+        averageTicket: paidOrdersCount > 0 ? Number((totalGross / paidOrdersCount).toFixed(2)) : 0,
+        averageFeePercentage: totalGross > 0 ? Number(((totalFees / totalGross) * 100).toFixed(2)) : 7.73
+      },
+      settlements
+    });
+  } catch (error) {
+    console.error('Error calculando finanzas:', error);
+    res.status(500).json({ error: 'Error al obtener reporte financiero' });
+  }
+};
+

@@ -37,7 +37,7 @@ export const AdminDashboard = () => {
   const recentOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
 
   const stats = [
-    { label: 'Ingresos Totales', value: `$${totalIngresos.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'bg-emerald-500', trend: '+12.5%', to: '/admin/orders' },
+    { label: 'Ingresos Totales', value: `$${totalIngresos.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'bg-emerald-500', trend: 'Liquidación MP', to: '/admin/finance' },
     { label: 'Ventas Activas', value: validOrders.length, icon: ShoppingBag, color: 'bg-blue-500', trend: '+5.2%', to: '/admin/orders' },
     { label: 'Clientes Registrados', value: uniqueCustomers, icon: Users, color: 'bg-indigo-500', trend: 'Base de clientes', to: '/admin/users' },
     { label: 'Productos en Catálogo', value: products.length, icon: Package, color: 'bg-amber-500', trend: 'Inventario', to: '/admin/products' },

@@ -1,5 +1,5 @@
 import { Outlet, Link, Navigate, useLocation } from 'react-router-dom';
-import { Package, LogOut, LayoutDashboard, Settings, ShoppingBag, FolderTree, Truck, Users } from 'lucide-react';
+import { Package, LogOut, LayoutDashboard, Settings, ShoppingBag, FolderTree, Truck, Users, Wallet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const AdminLayout = () => {
@@ -15,6 +15,7 @@ export const AdminLayout = () => {
     { icon: Package, label: 'Productos', path: '/admin/products' },
     { icon: FolderTree, label: 'Categorías', path: '/admin/categories' },
     { icon: ShoppingBag, label: 'Pedidos', path: '/admin/orders' },
+    { icon: Wallet, label: 'Finanzas MP', path: '/admin/finance' },
     { icon: Users, label: 'Clientes', path: '/admin/users' },
     { icon: Truck, label: 'Zonas de Envío', path: '/admin/shipping' },
     { icon: Settings, label: 'Configuración', path: '/admin/settings' },

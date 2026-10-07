@@ -297,3 +297,44 @@ export const updateUserRole = async (id: number, role: 'CUSTOMER' | 'ADMIN'): Pr
   return response.json();
 };
 
+export interface FinanceSettlement {
+  orderId: number;
+  mpPaymentId?: string | null;
+  date: string;
+  customerName: string;
+  customerEmail: string;
+  status: string;
+  isPaid: boolean;
+  grossAmount: number;
+  feeAmount: number;
+  netAmount: number;
+  feeDetail: string;
+  paymentMethod: string;
+}
+
+export interface FinanceSummary {
+  totalGross: number;
+  totalFees: number;
+  totalNet: number;
+  paidOrdersCount: number;
+  averageTicket: number;
+  averageFeePercentage: number;
+}
+
+export interface FinanceResponse {
+  summary: FinanceSummary;
+  settlements: FinanceSettlement[];
+}
+
+export const getOrderFinances = async (): Promise<FinanceResponse> => {
+  const response = await fetch(`${API_URL}/orders/finances`, {
+    headers: getAuthHeaders()
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al obtener finanzas');
+  }
+  return response.json();
+};
+
+

@@ -6,7 +6,8 @@ import {
   updateOrderStatus,
   cancelOrder,
   payCashOrder,
-  payOrderWithMercadoPago
+  payOrderWithMercadoPago,
+  getOrderFinances
 } from '../controllers/orderController';
 import { authenticateToken, requireAdmin } from '../middlewares/auth';
 
@@ -18,7 +19,8 @@ router.post('/checkout', authenticateToken, createOrderAndPreference);
 // Endpoint para recibir notificaciones de Mercado Pago (Público)
 router.post('/webhook', receiveWebhook);
 
-// Endpoint para ver historial de órdenes
+// Endpoints de Órdenes y Finanzas
+router.get('/finances', authenticateToken, requireAdmin, getOrderFinances);
 router.get('/', authenticateToken, getOrders);
 router.put('/:id/status', authenticateToken, requireAdmin, updateOrderStatus);
 
