@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ShoppingCart, Check, Scale, Eye } from 'lucide-react';
 import type { Product } from '../services/api';
 import { useCart } from '../context/CartContext';
@@ -14,6 +14,14 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
   const { addToCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
   const [internalModalOpen, setInternalModalOpen] = useState(false);
+  const hoverTimerRef = useRef<any>(null);
+
+  // Limpiar timer de hover al desmontar
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
 
   // Detección de combos o bolsones
   const isCombo = 
@@ -21,13 +29,12 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
     product.name.toLowerCase().includes('bolsón') ||
     product.name.toLowerCase().includes('bolson') ||
     product.name.toLowerCase().includes('pack') ||
-    (product.category?.name && (
-      product.category.name.toLowerCase().includes('combo') ||
-      product.category.name.toLowerCase().includes('bolson') ||
-      product.category.name.toLowerCase().includes('bolsón')
-    ));
+    Boolean(product.category?.name?.toLowerCase().includes('combo') ||
+    product.category?.name?.toLowerCase().includes('bolson') ||
+    product.category?.name?.toLowerCase().includes('bolsón'));
 
   const handleOpenDetail = () => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     if (onOpenDetail) {
       onOpenDetail(product);
     } else {
@@ -82,12 +89,12 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
       <div className="card-hover bg-white rounded-3xl overflow-hidden flex flex-col group border border-emerald-100/80 relative shadow-xs hover:shadow-xl transition-all duration-300">
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-amber-100/30 via-transparent to-rose-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0"></div>
         
-        {/* Imagen con trigger para abrir detalle si es combo */}
+        {/* Imagen: al hacer click o hover abre el modal de detalle */}
         <div 
-          onClick={isCombo ? handleOpenDetail : undefined}
-          className={`relative aspect-square overflow-hidden bg-slate-50 p-5 z-10 ${isCombo ? 'cursor-pointer' : ''}`}
+          onClick={handleOpenDetail}
+          className="relative aspect-square overflow-hidden bg-slate-50 p-5 z-10 cursor-pointer"
         >
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
           
           <img 
             src={product.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name)}&background=16a34a&color=fff&size=512`} 
@@ -108,21 +115,34 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
             ☀️ Del Día
           </span>
 
-          {/* Overlay interactivo visible en hover para combos */}
-          {isCombo && (
-            <div className="absolute inset-x-5 bottom-5 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-              <div className="bg-emerald-900/85 backdrop-blur-md text-white text-xs font-black py-2 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg border border-emerald-400/40">
-                <Eye className="w-4 h-4 text-emerald-300" />
-                <span>Ver qué incluye el combo</span>
-              </div>
+          {/* Overlay interactivo visible en hover para TODOS los productos */}
+          <div className="absolute inset-x-4 bottom-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+            <div 
+              onMouseEnter={() => {
+                // Al pasar el mouse y mantenerse brevemente en el botón de vista rápida, se abre el modal
+                hoverTimerRef.current = setTimeout(() => {
+                  handleOpenDetail();
+                }, 450);
+              }}
+              onMouseLeave={() => {
+                if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenDetail();
+              }}
+              className="bg-emerald-950/90 hover:bg-emerald-800 text-white text-xs font-black py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-xl border border-emerald-400/40 backdrop-blur-md cursor-pointer hover:scale-105 transition-all"
+            >
+              <Eye className="w-4 h-4 text-emerald-300 animate-pulse" />
+              <span>{isCombo ? 'Ver qué incluye el combo' : 'Vista Rápida / Ver Detalle'}</span>
             </div>
-          )}
+          </div>
         </div>
         
         <div className="p-5 flex flex-col flex-grow z-10 bg-white">
           <h3 
-            onClick={isCombo ? handleOpenDetail : undefined}
-            className={`font-black text-lg text-slate-800 mb-1 leading-tight group-hover:text-emerald-600 transition-colors ${isCombo ? 'cursor-pointer' : ''}`}
+            onClick={handleOpenDetail}
+            className="font-black text-lg text-slate-800 mb-1 leading-tight group-hover:text-emerald-600 transition-colors cursor-pointer"
           >
             {product.name}
           </h3>
@@ -145,6 +165,21 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
               <span>Ver qué incluye (fotos y cantidades)</span>
             </button>
           )}
+
+          {/* Botón de vista rápida sutil para productos regulares */}
+          {!isCombo && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenDetail();
+              }}
+              className="w-full mb-3 py-1.5 px-3 bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors border border-slate-200/60 cursor-pointer"
+            >
+              <Eye className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-500" />
+              <span>Ver detalle y formatos</span>
+            </button>
+          )}
           
           {/* Selector de Cantidad / Formato */}
           <div className="mb-4">
@@ -157,8 +192,11 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
                 <button
                   key={opt.id}
                   type="button"
-                  onClick={() => setSelectedOption(opt)}
-                  className={`py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedOption(opt);
+                  }}
+                  className={`py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                     selectedOption.id === opt.id
                       ? 'bg-emerald-600 text-white shadow-sm scale-100'
                       : 'text-slate-600 hover:bg-white hover:text-emerald-700'
@@ -183,7 +221,7 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
             </div>
             <button 
               onClick={handleAddToCart}
-              className={`px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all ${
+              className={`px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all cursor-pointer ${
                 isAdded 
                   ? 'bg-emerald-500 text-white scale-105 shadow-md shadow-emerald-500/30' 
                   : 'btn-gradient shadow-xs hover:shadow-md'
@@ -206,10 +244,10 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
         </div>
       </div>
 
-      {/* Modal interno fallback si no se pasó onOpenDetail */}
+      {/* Modal de detalle para cualquier producto */}
       {internalModalOpen && (
         <ComboDetailModal 
-          combo={product} 
+          product={product} 
           onClose={() => setInternalModalOpen(false)} 
           allProducts={allProducts}
         />
