@@ -50,7 +50,10 @@ export const getOrders = async (token: string): Promise<Order[]> => {
   const response = await fetch(`${API_URL}/orders`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
-  if (!response.ok) throw new Error('Error al obtener ordenes');
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al obtener ordenes');
+  }
   return response.json();
 };
 

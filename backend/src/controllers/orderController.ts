@@ -286,8 +286,9 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
     });
 
     res.json(orders);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener ordenes' });
+  } catch (error: any) {
+    console.error('Error al obtener ordenes en getOrders:', error);
+    res.status(500).json({ error: 'Error al obtener ordenes', details: error?.message });
   }
 };
 
