@@ -36,20 +36,37 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
       const product = await prisma.product.findUnique({ where: { id: Number(item.productId) } });
       if (!product) return res.status(404).json({ error: `Producto con ID ${item.productId} no encontrado` });
 
-      const itemTotal = Number(product.price) * quantity;
+      let itemPrice = Number(product.price);
+      let itemTotal = itemPrice * quantity;
+
+      // Calcular descuento por volumen (2 kg y 3 kg o unidades)
+      if (Math.abs(quantity - 2) < 0.05 && product.price2kg && Number(product.price2kg) > 0) {
+        itemTotal = Number(product.price2kg);
+        itemPrice = itemTotal / quantity;
+      } else if (Math.abs(quantity - 3) < 0.05 && product.price3kg && Number(product.price3kg) > 0) {
+        itemTotal = Number(product.price3kg);
+        itemPrice = itemTotal / quantity;
+      } else if (quantity >= 3 && product.price3kg && Number(product.price3kg) > 0) {
+        itemPrice = Number(product.price3kg) / 3;
+        itemTotal = itemPrice * quantity;
+      } else if (quantity >= 2 && product.price2kg && Number(product.price2kg) > 0) {
+        itemPrice = Number(product.price2kg) / 2;
+        itemTotal = itemPrice * quantity;
+      }
+
       total += itemTotal;
 
       orderItemsData.push({
         productId: product.id,
         quantity: quantity,
-        price: product.price
+        price: Number(itemPrice.toFixed(2))
       });
 
       preferenceItems.push({
         id: product.id.toString(),
         title: product.name,
         quantity: quantity,
-        unit_price: Number(product.price),
+        unit_price: Number(itemPrice.toFixed(2)),
         currency_id: 'ARS'
       });
     }

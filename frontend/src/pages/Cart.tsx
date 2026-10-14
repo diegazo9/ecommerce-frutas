@@ -1,4 +1,4 @@
-import { useCart } from '../context/CartContext';
+import { useCart, calculateItemTotal } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { 
   Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShoppingCart, 
@@ -198,9 +198,16 @@ export const Cart = () => {
                     : `$${Number(item.price).toFixed(2)} / ${item.unit || 'kg'}`
                   }
                 </p>
-                <p className="text-emerald-600 font-black text-lg mt-0.5">
-                  Subtotal: ${(Number(item.price) * item.cartQuantity).toFixed(2)}
-                </p>
+                <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                  <p className="text-emerald-600 font-black text-lg">
+                    Subtotal: ${calculateItemTotal(item).toFixed(2)}
+                  </p>
+                  {calculateItemTotal(item) < Number(item.price) * item.cartQuantity && (
+                    <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                      🔥 Ahorrás ${(Number(item.price) * item.cartQuantity - calculateItemTotal(item)).toFixed(2)}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200">

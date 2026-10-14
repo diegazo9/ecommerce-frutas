@@ -170,18 +170,58 @@ export const ProductDetailModal = ({
 
   // Opciones para productos regulares (kg o unidad)
   const isKiloProduct = targetProduct ? (targetProduct.unit === 'kg' || !targetProduct.unit) : true;
+  const hasDisc2kg = Boolean(targetProduct?.price2kg && Number(targetProduct.price2kg) > 0);
+  const hasDisc3kg = Boolean(targetProduct?.price3kg && Number(targetProduct.price3kg) > 0);
+  const disc2kgPct = targetProduct?.discount2kg ? Math.round(Number(targetProduct.discount2kg)) : 0;
+  const disc3kgPct = targetProduct?.discount3kg ? Math.round(Number(targetProduct.discount3kg)) : 0;
+
   const kiloOptions = [
-    { id: 'medio', label: '1/2 kg', factor: 0.5, desc: 'Medio Kilo (500g)' },
-    { id: 'kilo', label: '1 kg', factor: 1.0, desc: '1 Kilo' },
-    { id: 'dos_kilos', label: '2 kg', factor: 2.0, desc: '2 Kilos' },
-    { id: 'unidad', label: '1 unid.', factor: 0.25, desc: '1 Unidad (aprox. 250g)' },
+    { id: 'medio', label: '1/2 kg', factor: 0.5, desc: 'Medio Kilo (500g)', price: Number(targetProduct?.price || 0) * 0.5, regularPrice: Number(targetProduct?.price || 0) * 0.5 },
+    { id: 'kilo', label: '1 kg', factor: 1.0, desc: '1 Kilo', price: Number(targetProduct?.price || 0), regularPrice: Number(targetProduct?.price || 0) },
+    { 
+      id: 'dos_kilos', 
+      label: '2 kg', 
+      factor: 2.0, 
+      desc: '2 Kilos',
+      badge: disc2kgPct > 0 ? `-${disc2kgPct}%` : (hasDisc2kg ? 'Promo' : undefined),
+      price: hasDisc2kg ? Number(targetProduct?.price2kg) : Number(targetProduct?.price || 0) * 2,
+      regularPrice: Number(targetProduct?.price || 0) * 2
+    },
+    { 
+      id: 'tres_kilos', 
+      label: '3 kg', 
+      factor: 3.0, 
+      desc: '3 Kilos',
+      badge: disc3kgPct > 0 ? `-${disc3kgPct}%` : (hasDisc3kg ? 'Super Ahorro' : undefined),
+      price: hasDisc3kg ? Number(targetProduct?.price3kg) : Number(targetProduct?.price || 0) * 3,
+      regularPrice: Number(targetProduct?.price || 0) * 3
+    },
+    { id: 'unidad', label: '1 unid.', factor: 0.25, desc: '1 Unidad (aprox. 250g)', price: Number(targetProduct?.price || 0) * 0.25, regularPrice: Number(targetProduct?.price || 0) * 0.25 },
   ];
+
   const unitOptions = [
-    { id: '1und', label: '1 unid.', factor: 1.0, desc: '1 Unidad' },
-    { id: '2und', label: '2 unid.', factor: 2.0, desc: '2 Unidades' },
-    { id: '3und', label: '3 unid.', factor: 3.0, desc: '3 Unidades' },
-    { id: '6und', label: '6 unid.', factor: 6.0, desc: 'Media Docena (6)' },
+    { id: '1und', label: '1 unid.', factor: 1.0, desc: '1 Unidad', price: Number(targetProduct?.price || 0), regularPrice: Number(targetProduct?.price || 0) },
+    { 
+      id: '2und', 
+      label: '2 unid.', 
+      factor: 2.0, 
+      desc: '2 Unidades',
+      badge: disc2kgPct > 0 ? `-${disc2kgPct}%` : (hasDisc2kg ? 'Promo' : undefined),
+      price: hasDisc2kg ? Number(targetProduct?.price2kg) : Number(targetProduct?.price || 0) * 2,
+      regularPrice: Number(targetProduct?.price || 0) * 2
+    },
+    { 
+      id: '3und', 
+      label: '3 unid.', 
+      factor: 3.0, 
+      desc: '3 Unidades',
+      badge: disc3kgPct > 0 ? `-${disc3kgPct}%` : (hasDisc3kg ? 'Super Ahorro' : undefined),
+      price: hasDisc3kg ? Number(targetProduct?.price3kg) : Number(targetProduct?.price || 0) * 3,
+      regularPrice: Number(targetProduct?.price || 0) * 3
+    },
+    { id: '6und', label: '6 unid.', factor: 6.0, desc: 'Media Docena (6)', price: Number(targetProduct?.price || 0) * 6, regularPrice: Number(targetProduct?.price || 0) * 6 },
   ];
+
   const options = isKiloProduct ? kiloOptions : unitOptions;
   const [selectedOption, setSelectedOption] = useState(options[1] || options[0]);
 
@@ -217,9 +257,27 @@ export const ProductDetailModal = ({
 
   // Cálculos de precio
   const unitPrice = Number(targetProduct.price);
-  const calculatedPrice = isCombo 
-    ? unitPrice * comboQuantity 
-    : unitPrice * selectedOption.factor;
+  let calculatedPrice = 0;
+  let regularPrice = 0;
+
+  if (isCombo) {
+    if (comboQuantity === 2 && hasDisc2kg) {
+      calculatedPrice = Number(targetProduct.price2kg);
+      regularPrice = unitPrice * 2;
+    } else if (comboQuantity === 3 && hasDisc3kg) {
+      calculatedPrice = Number(targetProduct.price3kg);
+      regularPrice = unitPrice * 3;
+    } else {
+      calculatedPrice = unitPrice * comboQuantity;
+      regularPrice = unitPrice * comboQuantity;
+    }
+  } else {
+    calculatedPrice = selectedOption.price;
+    regularPrice = selectedOption.regularPrice;
+  }
+
+  const hasSavings = regularPrice > calculatedPrice;
+  const savings = regularPrice - calculatedPrice;
 
   // Manejar añadir al carrito y CERRAR MODAL automáticamente
   const handleAddToCart = () => {
@@ -416,22 +474,34 @@ export const ProductDetailModal = ({
             {/* CASO B: SELECTOR DE FORMATO PARA PRODUCTOS REGULARES */}
             {!isCombo && (
               <div className="bg-slate-50 p-5 rounded-3xl border border-slate-200/80">
-                <div className="flex items-center gap-2 text-slate-700 text-sm font-bold mb-3">
-                  <Scale className="w-4 h-4 text-emerald-600" />
-                  <span>Selecciona el peso o formato deseado:</span>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2 text-slate-700 text-sm font-bold">
+                    <Scale className="w-4 h-4 text-emerald-600" />
+                    <span>Selecciona el peso o formato deseado:</span>
+                  </div>
+                  {(hasDisc2kg || hasDisc3kg) && (
+                    <span className="text-xs font-black text-rose-600 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">
+                      🔥 Promociones por volumen activas
+                    </span>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className={`grid grid-cols-2 ${isKiloProduct ? 'sm:grid-cols-5' : 'sm:grid-cols-4'} gap-2.5`}>
                   {options.map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => setSelectedOption(opt)}
-                      className={`py-3 px-3 rounded-2xl text-xs font-black transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                      className={`relative py-3 px-2 rounded-2xl text-xs font-black transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
                         selectedOption.id === opt.id
                           ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 scale-[1.02]'
                           : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-300 hover:text-emerald-700'
                       }`}
                     >
+                      {opt.badge && (
+                        <span className="absolute -top-2.5 -right-1 bg-gradient-to-r from-amber-500 to-rose-500 text-white font-black text-[9px] px-2 py-0.5 rounded-full shadow-xs leading-none">
+                          {opt.badge}
+                        </span>
+                      )}
                       <span className="text-sm">{opt.label}</span>
                       <span className={`text-[10px] font-medium ${selectedOption.id === opt.id ? 'text-emerald-100' : 'text-slate-400'}`}>
                         {opt.desc}
@@ -449,12 +519,24 @@ export const ProductDetailModal = ({
         <div className="p-4 sm:p-6 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
           <div className="flex items-center justify-between w-full sm:w-auto gap-6">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                {isCombo ? 'Precio del combo' : 'Total estimado'}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  {isCombo ? 'Precio del combo' : 'Total estimado'}
+                </p>
+                {hasSavings && (
+                  <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-2 py-0.5 rounded-full">
+                    🔥 Ahorrás ${savings.toFixed(0)}
+                  </span>
+                )}
+              </div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl sm:text-3xl font-black text-slate-900">${calculatedPrice.toFixed(2)}</span>
-                {isCombo && comboQuantity > 1 && (
+                {hasSavings && (
+                  <span className="text-sm font-bold text-slate-400 line-through">
+                    ${regularPrice.toFixed(2)}
+                  </span>
+                )}
+                {isCombo && comboQuantity > 1 && !hasSavings && (
                   <span className="text-xs font-bold text-slate-400">(${unitPrice.toFixed(2)} c/u)</span>
                 )}
                 {!isCombo && (
@@ -468,18 +550,28 @@ export const ProductDetailModal = ({
             {/* Selector de cantidad para combos */}
             {isCombo && (
               <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200">
-                {[1, 2, 3, 6].map((num) => (
+                {[
+                  { qty: 1, label: '1 pack', badge: undefined },
+                  { qty: 2, label: '2 packs', badge: disc2kgPct > 0 ? `-${disc2kgPct}%` : (hasDisc2kg ? 'Promo' : undefined) },
+                  { qty: 3, label: '3 packs', badge: disc3kgPct > 0 ? `-${disc3kgPct}%` : (hasDisc3kg ? 'Super Ahorro' : undefined) },
+                  { qty: 6, label: '6 packs', badge: undefined },
+                ].map((pack) => (
                   <button
-                    key={num}
+                    key={pack.qty}
                     type="button"
-                    onClick={() => setComboQuantity(num)}
-                    className={`px-3 py-1.5 text-xs font-black rounded-xl transition-all cursor-pointer ${
-                      comboQuantity === num
+                    onClick={() => setComboQuantity(pack.qty)}
+                    className={`relative px-3 py-1.5 text-xs font-black rounded-xl transition-all cursor-pointer ${
+                      comboQuantity === pack.qty
                         ? 'bg-emerald-600 text-white shadow-sm'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                     }`}
                   >
-                    {num} {num === 1 ? 'pack' : 'packs'}
+                    {pack.badge && (
+                      <span className="absolute -top-2.5 -right-1 bg-gradient-to-r from-amber-500 to-rose-500 text-white font-black text-[8px] px-1.5 py-0.2 rounded-full shadow-xs leading-tight">
+                        {pack.badge}
+                      </span>
+                    )}
+                    <span>{pack.label}</span>
                   </button>
                 ))}
               </div>

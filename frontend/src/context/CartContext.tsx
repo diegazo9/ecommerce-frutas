@@ -173,7 +173,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const clearCart = () => setCartItems([]);
 
-  const cartTotal = cartItems.reduce((total, item) => total + (Number(item.price) * item.cartQuantity), 0);
+  const cartTotal = cartItems.reduce((total, item) => total + calculateItemTotal(item), 0);
   const cartCount = cartItems.length;
 
   return (
@@ -183,6 +183,35 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </CartContext.Provider>
   );
+};
+
+export const calculateItemTotal = (item: CartItem): number => {
+  const basePrice = Number(item.price);
+  const qty = item.cartQuantity;
+
+  // Si tiene exactamente 2 kg (o unidades) y tiene precio para 2
+  if (Math.abs(qty - 2) < 0.05 && item.price2kg && Number(item.price2kg) > 0) {
+    return Number(item.price2kg);
+  }
+
+  // Si tiene exactamente 3 kg (o unidades) y tiene precio para 3
+  if (Math.abs(qty - 3) < 0.05 && item.price3kg && Number(item.price3kg) > 0) {
+    return Number(item.price3kg);
+  }
+
+  // Si compra 3 o más kg
+  if (qty >= 3 && item.price3kg && Number(item.price3kg) > 0) {
+    const unitWithDisc = Number(item.price3kg) / 3;
+    return unitWithDisc * qty;
+  }
+
+  // Si compra 2 o más kg
+  if (qty >= 2 && item.price2kg && Number(item.price2kg) > 0) {
+    const unitWithDisc = Number(item.price2kg) / 2;
+    return unitWithDisc * qty;
+  }
+
+  return basePrice * qty;
 };
 
 export const useCart = () => {

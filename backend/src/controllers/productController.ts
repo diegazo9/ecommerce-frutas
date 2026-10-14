@@ -59,21 +59,44 @@ export const getProducts = async (req: Request, res: Response) => {
   }
 };
 
+const cleanNumber = (val: any): number | null => {
+  if (val === undefined || val === null || val === '') return null;
+  const num = typeof val === 'string' ? Number(val.replace(',', '.')) : Number(val);
+  return isNaN(num) ? null : num;
+};
+
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    const { name, description, price, stock, unit, categoryId, imageUrl } = req.body;
-    const cleanPrice = typeof price === 'string' ? Number(price.replace(',', '.')) : Number(price);
-    const cleanStock = typeof stock === 'string' ? Number(stock.replace(',', '.')) : Number(stock);
+    const { 
+      name, 
+      description, 
+      price, 
+      stock, 
+      unit, 
+      categoryId, 
+      imageUrl,
+      price2kg,
+      discount2kg,
+      price3kg,
+      discount3kg
+    } = req.body;
+    
+    const cleanPrice = cleanNumber(price) || 0;
+    const cleanStock = cleanNumber(stock) || 0;
 
     const product = await prisma.product.create({
       data: {
         name,
         description,
-        price: isNaN(cleanPrice) ? 0 : cleanPrice,
-        stock: isNaN(cleanStock) ? 0 : cleanStock,
+        price: cleanPrice,
+        stock: cleanStock,
         unit: unit || 'kg',
         categoryId: Number(categoryId),
-        imageUrl
+        imageUrl,
+        price2kg: cleanNumber(price2kg),
+        discount2kg: cleanNumber(discount2kg),
+        price3kg: cleanNumber(price3kg),
+        discount3kg: cleanNumber(discount3kg)
       },
       include: { category: true }
     });
@@ -87,21 +110,37 @@ export const createProduct = async (req: Request, res: Response) => {
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, description, price, stock, unit, categoryId, imageUrl } = req.body;
+    const { 
+      name, 
+      description, 
+      price, 
+      stock, 
+      unit, 
+      categoryId, 
+      imageUrl,
+      price2kg,
+      discount2kg,
+      price3kg,
+      discount3kg
+    } = req.body;
     
-    const cleanPrice = price !== undefined ? (typeof price === 'string' ? Number(price.replace(',', '.')) : Number(price)) : undefined;
-    const cleanStock = stock !== undefined ? (typeof stock === 'string' ? Number(stock.replace(',', '.')) : Number(stock)) : undefined;
+    const cleanPrice = price !== undefined ? cleanNumber(price) : undefined;
+    const cleanStock = stock !== undefined ? cleanNumber(stock) : undefined;
 
     const product = await prisma.product.update({
       where: { id: Number(id) },
       data: {
         name,
         description,
-        price: cleanPrice !== undefined && !isNaN(cleanPrice) ? cleanPrice : undefined,
-        stock: cleanStock !== undefined && !isNaN(cleanStock) ? cleanStock : undefined,
+        price: cleanPrice !== undefined && cleanPrice !== null ? cleanPrice : undefined,
+        stock: cleanStock !== undefined && cleanStock !== null ? cleanStock : undefined,
         unit,
         categoryId: categoryId ? Number(categoryId) : undefined,
-        imageUrl
+        imageUrl,
+        price2kg: price2kg !== undefined ? cleanNumber(price2kg) : undefined,
+        discount2kg: discount2kg !== undefined ? cleanNumber(discount2kg) : undefined,
+        price3kg: price3kg !== undefined ? cleanNumber(price3kg) : undefined,
+        discount3kg: discount3kg !== undefined ? cleanNumber(discount3kg) : undefined
       },
       include: { category: true }
     });

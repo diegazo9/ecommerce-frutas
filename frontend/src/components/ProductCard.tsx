@@ -45,24 +45,65 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
   // Formatos disponibles según la unidad del producto
   const isKiloProduct = product.unit === 'kg' || !product.unit;
 
+  const hasDisc2kg = Boolean(product.price2kg && Number(product.price2kg) > 0);
+  const hasDisc3kg = Boolean(product.price3kg && Number(product.price3kg) > 0);
+  const disc2kgPct = product.discount2kg ? Math.round(Number(product.discount2kg)) : 0;
+  const disc3kgPct = product.discount3kg ? Math.round(Number(product.discount3kg)) : 0;
+
   const kiloOptions = [
-    { id: 'medio', label: '1/2 kg', factor: 0.5, desc: 'Medio Kilo (500g)' },
-    { id: 'kilo', label: '1 kg', factor: 1.0, desc: '1 Kilo' },
-    { id: 'dos_kilos', label: '2 kg', factor: 2.0, desc: '2 Kilos' },
-    { id: 'unidad', label: '1 unid.', factor: 0.25, desc: '1 Unidad (aprox. 250g)' },
+    { id: 'medio', label: '1/2 kg', factor: 0.5, desc: 'Medio Kilo (500g)', price: Number(product.price) * 0.5, regularPrice: Number(product.price) * 0.5 },
+    { id: 'kilo', label: '1 kg', factor: 1.0, desc: '1 Kilo', price: Number(product.price), regularPrice: Number(product.price) },
+    { 
+      id: 'dos_kilos', 
+      label: '2 kg', 
+      factor: 2.0, 
+      desc: '2 Kilos',
+      badge: disc2kgPct > 0 ? `-${disc2kgPct}%` : (hasDisc2kg ? 'Promo' : undefined),
+      price: hasDisc2kg ? Number(product.price2kg) : Number(product.price) * 2,
+      regularPrice: Number(product.price) * 2
+    },
+    { 
+      id: 'tres_kilos', 
+      label: '3 kg', 
+      factor: 3.0, 
+      desc: '3 Kilos',
+      badge: disc3kgPct > 0 ? `-${disc3kgPct}%` : (hasDisc3kg ? 'Super Ahorro' : undefined),
+      price: hasDisc3kg ? Number(product.price3kg) : Number(product.price) * 3,
+      regularPrice: Number(product.price) * 3
+    },
+    { id: 'unidad', label: '1 unid.', factor: 0.25, desc: '1 Unidad (aprox. 250g)', price: Number(product.price) * 0.25, regularPrice: Number(product.price) * 0.25 },
   ];
 
   const unitOptions = [
-    { id: '1und', label: '1 unid.', factor: 1.0, desc: '1 Unidad' },
-    { id: '2und', label: '2 unid.', factor: 2.0, desc: '2 Unidades' },
-    { id: '3und', label: '3 unid.', factor: 3.0, desc: '3 Unidades' },
-    { id: '6und', label: '6 unid.', factor: 6.0, desc: 'Media Docena (6)' },
+    { id: '1und', label: '1 unid.', factor: 1.0, desc: '1 Unidad', price: Number(product.price), regularPrice: Number(product.price) },
+    { 
+      id: '2und', 
+      label: '2 unid.', 
+      factor: 2.0, 
+      desc: '2 Unidades',
+      badge: disc2kgPct > 0 ? `-${disc2kgPct}%` : (hasDisc2kg ? 'Promo' : undefined),
+      price: hasDisc2kg ? Number(product.price2kg) : Number(product.price) * 2,
+      regularPrice: Number(product.price) * 2
+    },
+    { 
+      id: '3und', 
+      label: '3 unid.', 
+      factor: 3.0, 
+      desc: '3 Unidades',
+      badge: disc3kgPct > 0 ? `-${disc3kgPct}%` : (hasDisc3kg ? 'Super Ahorro' : undefined),
+      price: hasDisc3kg ? Number(product.price3kg) : Number(product.price) * 3,
+      regularPrice: Number(product.price) * 3
+    },
+    { id: '6und', label: '6 unid.', factor: 6.0, desc: 'Media Docena (6)', price: Number(product.price) * 6, regularPrice: Number(product.price) * 6 },
   ];
 
   const options = isKiloProduct ? kiloOptions : unitOptions;
   const [selectedOption, setSelectedOption] = useState(options[1] || options[0]);
 
-  const calculatedPrice = Number(product.price) * selectedOption.factor;
+  const calculatedPrice = selectedOption.price;
+  const regularPrice = selectedOption.regularPrice;
+  const hasSavings = regularPrice > calculatedPrice;
+  const savings = regularPrice - calculatedPrice;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -181,13 +222,30 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
             </button>
           )}
           
+          {/* Banner de descuentos por volumen si el producto tiene promociones configuradas */}
+          {(hasDisc2kg || hasDisc3kg) && (
+            <div className="mb-3 px-2.5 py-1 bg-amber-50 border border-amber-200/70 rounded-xl flex items-center justify-between text-[10.5px] text-amber-900 font-bold">
+              <span className="flex items-center gap-1">
+                <span>🔥</span>
+                <span>Llevando más:</span>
+              </span>
+              <span className="text-amber-800 font-black">
+                {hasDisc2kg && hasDisc3kg 
+                  ? `2kg (-${disc2kgPct}%) · 3kg (-${disc3kgPct}%)` 
+                  : hasDisc2kg 
+                    ? `2kg (-${disc2kgPct}%)` 
+                    : `3kg (-${disc3kgPct}%)`}
+              </span>
+            </div>
+          )}
+          
           {/* Selector de Cantidad / Formato */}
           <div className="mb-4">
             <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold mb-2">
               <Scale className="w-3.5 h-3.5 text-emerald-500" />
               <span>Selecciona cantidad:</span>
             </div>
-            <div className="grid grid-cols-4 gap-1.5 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+            <div className={`grid ${isKiloProduct ? 'grid-cols-5' : 'grid-cols-4'} gap-1 bg-slate-50 p-1.5 rounded-2xl border border-slate-100`}>
               {options.map((opt) => (
                 <button
                   key={opt.id}
@@ -196,27 +254,47 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
                     e.stopPropagation();
                     setSelectedOption(opt);
                   }}
-                  className={`py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                  className={`relative py-1.5 px-0.5 text-center text-xs font-bold rounded-xl transition-all cursor-pointer ${
                     selectedOption.id === opt.id
                       ? 'bg-emerald-600 text-white shadow-sm scale-100'
                       : 'text-slate-600 hover:bg-white hover:text-emerald-700'
                   }`}
                 >
-                  {opt.label}
+                  {opt.badge && (
+                    <span className="absolute -top-2.5 -right-1 bg-gradient-to-r from-amber-500 to-rose-500 text-white font-black text-[8px] px-1 py-0.5 rounded-full shadow-xs leading-none">
+                      {opt.badge}
+                    </span>
+                  )}
+                  <span>{opt.label}</span>
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-emerald-700 font-semibold mt-1.5 text-center">
-              {selectedOption.desc}
+            <p className="text-[11px] text-emerald-700 font-semibold mt-1.5 text-center flex items-center justify-center gap-1">
+              <span>{selectedOption.desc}</span>
+              {hasSavings && (
+                <span className="text-rose-600 font-black">
+                  (¡Ahorro aplicado!)
+                </span>
+              )}
             </p>
           </div>
 
           {/* Precio y Botón de compra */}
           <div className="flex items-end justify-between mt-auto pt-2 border-t border-slate-100">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Total estimado</p>
-              <div className="flex items-baseline gap-1">
+              <div className="flex items-center gap-1 mb-0.5">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total estimado</p>
+                {hasSavings && (
+                  <span className="bg-rose-100 text-rose-700 text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                    Ahorrás ${savings.toFixed(0)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-black text-slate-900 tracking-tight">${calculatedPrice.toFixed(2)}</span>
+                {hasSavings && (
+                  <span className="text-xs text-slate-400 line-through font-bold">${regularPrice.toFixed(2)}</span>
+                )}
               </div>
             </div>
             <button 

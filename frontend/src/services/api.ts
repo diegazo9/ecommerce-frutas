@@ -9,6 +9,10 @@ export interface Product {
   unit: string;
   categoryId: number;
   imageUrl: string;
+  price2kg?: number | null;
+  discount2kg?: number | null;
+  price3kg?: number | null;
+  discount3kg?: number | null;
   category?: {
     id: number;
     name: string;
