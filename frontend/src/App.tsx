@@ -19,6 +19,7 @@ import { AdminSettings } from './pages/AdminSettings';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminUsers } from './pages/AdminUsers';
 import { AdminFinance } from './pages/AdminFinance';
+import { AdminDeliveryRoutes } from './pages/AdminDeliveryRoutes';
 import { Login } from './pages/Login';
 import { CustomerProfile } from './pages/CustomerProfile';
 
@@ -49,6 +50,7 @@ function App() {
               <Route path="products" element={<AdminProducts />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="orders" element={<AdminOrders />} />
+              <Route path="routes" element={<AdminDeliveryRoutes />} />
               <Route path="finance" element={<AdminFinance />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="shipping" element={<AdminShipping />} />

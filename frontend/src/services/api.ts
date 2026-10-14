@@ -31,6 +31,23 @@ export interface Order {
   total: number;
   status: string;
   createdAt: string;
+  deliveryDate?: string | null;
+  deliveryTimeRange?: string | null;
+  deliveryAddress?: string | null;
+  shippingZoneId?: number | null;
+  shippingZone?: ShippingZone | null;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  items?: Array<{
+    id: number;
+    quantity: number;
+    price: number;
+    product: Product;
+  }>;
   [key: string]: any;
 }
 
