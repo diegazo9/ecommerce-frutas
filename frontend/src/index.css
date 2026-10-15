@@ -95,3 +95,25 @@ body {
 .animate-spring {
   animation: spring-bounce 3s ease-in-out infinite;
 }
+
+/* Estilos de Impresión Profesional para Pedidos y Hojas de Ruta */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

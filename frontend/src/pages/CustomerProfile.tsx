@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Package, Calendar, Clock, Loader2, MapPin, CreditCard, Banknote, XCircle, MessageCircle } from 'lucide-react';
+import { LogOut, Package, Calendar, Clock, Loader2, MapPin, CreditCard, Banknote, XCircle, MessageCircle, Printer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL, cancelOrder, payOrderWithCash, payOrderWithMercadoPago } from '../services/api';
+import { OrderPrintModal } from '../components/OrderPrintModal';
 
 interface Order {
   id: number;
@@ -26,6 +27,7 @@ export const CustomerProfile = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingOrderId, setProcessingOrderId] = useState<number | null>(null);
+  const [printOrder, setPrintOrder] = useState<any | null>(null);
 
   const fetchOrders = async () => {
     if (!token) return;
@@ -142,7 +144,17 @@ export const CustomerProfile = () => {
             <div key={order.id} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
               <div className="flex flex-wrap justify-between items-start gap-4 border-b border-slate-100 pb-4 mb-4">
                 <div>
-                  <p className="text-sm text-slate-500 font-bold mb-1">Pedido #{order.id}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm text-slate-800 font-black">Pedido #{order.id}</p>
+                    <button
+                      type="button"
+                      onClick={() => setPrintOrder(order)}
+                      className="p-1 rounded-lg bg-slate-100 hover:bg-emerald-50 text-slate-500 hover:text-emerald-700 transition-colors cursor-pointer"
+                      title="Imprimir comprobante de compra"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                   <p className="text-xs text-slate-400">{new Date(order.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div className="text-right">
@@ -272,6 +284,13 @@ export const CustomerProfile = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {printOrder && (
+        <OrderPrintModal
+          order={printOrder}
+          onClose={() => setPrintOrder(null)}
+        />
       )}
     </div>
   );
