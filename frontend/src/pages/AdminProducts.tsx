@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadImage } from '../services/api';
 import type { Product, Category } from '../services/api';
-import { Plus, Edit2, Trash2, Loader2, AlertCircle, X, Tag, FileSpreadsheet, Calculator } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, AlertCircle, X, Tag, FileSpreadsheet, Calculator, CheckCircle2 } from 'lucide-react';
 import { ProductExcelImportModal } from '../components/ProductExcelImportModal';
 
 export const AdminProducts = () => {
@@ -158,7 +158,7 @@ export const AdminProducts = () => {
       name: '',
       description: '',
       price: '',
-      stock: '',
+      stock: '20',
       unit: 'kg',
       categoryId: categories.length > 0 ? String(categories[0].id) : '1',
       imageUrl: '',
@@ -172,20 +172,36 @@ export const AdminProducts = () => {
 
   const handleEdit = (product: Product) => {
     setEditingProductId(product.id);
+    const safeStock = product.stock !== undefined && product.stock !== null && !isNaN(Number(product.stock))
+      ? String(Number(product.stock))
+      : '0';
+    const safePrice = product.price !== undefined && product.price !== null && !isNaN(Number(product.price))
+      ? String(Number(product.price))
+      : '0';
+
     setFormData({
-      name: product.name,
+      name: product.name || '',
       description: product.description || '',
-      price: String(product.price),
-      stock: String(product.stock),
+      price: safePrice,
+      stock: safeStock,
       unit: product.unit || 'kg',
-      categoryId: String(product.categoryId),
+      categoryId: String(product.categoryId || (categories[0]?.id || '1')),
       imageUrl: product.imageUrl || '',
-      price2kg: product.price2kg ? String(product.price2kg) : '',
-      discount2kg: product.discount2kg ? String(product.discount2kg) : '',
-      price3kg: product.price3kg ? String(product.price3kg) : '',
-      discount3kg: product.discount3kg ? String(product.discount3kg) : ''
+      price2kg: product.price2kg !== undefined && product.price2kg !== null ? String(Number(product.price2kg)) : '',
+      discount2kg: product.discount2kg !== undefined && product.discount2kg !== null ? String(Number(product.discount2kg)) : '',
+      price3kg: product.price3kg !== undefined && product.price3kg !== null ? String(Number(product.price3kg)) : '',
+      discount3kg: product.discount3kg !== undefined && product.discount3kg !== null ? String(Number(product.discount3kg)) : ''
     });
     setIsModalOpen(true);
+  };
+
+  const handleQuickSetStock = async (product: Product, newStock: number) => {
+    try {
+      await updateProduct(product.id, { stock: newStock });
+      await fetchProducts();
+    } catch (err: any) {
+      alert('Error al actualizar stock: ' + (err.message || 'Error desconocido'));
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -202,8 +218,8 @@ export const AdminProducts = () => {
     e.preventDefault();
     try {
       setIsSaving(true);
-      const cleanPrice = Number(formData.price.replace(',', '.'));
-      const cleanStock = Number(formData.stock.replace(',', '.'));
+      const cleanPrice = Number(String(formData.price ?? '').replace(',', '.'));
+      const cleanStock = Number(String(formData.stock ?? '0').replace(',', '.'));
 
       if (isNaN(cleanPrice) || cleanPrice < 0) {
         alert('Por favor ingresa un precio válido mayor o igual a 0');
@@ -217,13 +233,13 @@ export const AdminProducts = () => {
         return;
       }
 
-      const cleanPrice2kg = formData.price2kg ? Number(formData.price2kg.replace(',', '.')) : null;
-      const cleanDiscount2kg = formData.discount2kg ? Number(formData.discount2kg.replace(',', '.')) : null;
-      const cleanPrice3kg = formData.price3kg ? Number(formData.price3kg.replace(',', '.')) : null;
-      const cleanDiscount3kg = formData.discount3kg ? Number(formData.discount3kg.replace(',', '.')) : null;
+      const cleanPrice2kg = formData.price2kg ? Number(String(formData.price2kg).replace(',', '.')) : null;
+      const cleanDiscount2kg = formData.discount2kg ? Number(String(formData.discount2kg).replace(',', '.')) : null;
+      const cleanPrice3kg = formData.price3kg ? Number(String(formData.price3kg).replace(',', '.')) : null;
+      const cleanDiscount3kg = formData.discount3kg ? Number(String(formData.discount3kg).replace(',', '.')) : null;
 
       const payload = {
-        name: formData.name,
+        name: formData.name.trim(),
         description: formData.description,
         price: cleanPrice,
         stock: cleanStock,
@@ -236,23 +252,14 @@ export const AdminProducts = () => {
         discount3kg: cleanDiscount3kg
       };
 
-      const selectedCatObj = categories.find(c => c.id === Number(formData.categoryId));
-
       if (editingProductId) {
-        const updated = await updateProduct(editingProductId, payload);
-        const productWithCategory = {
-          ...updated,
-          category: updated.category || selectedCatObj
-        };
-        setProducts(products.map(p => p.id === editingProductId ? productWithCategory : p));
+        await updateProduct(editingProductId, payload);
       } else {
-        const newProduct = await createProduct(payload);
-        const productWithCategory = {
-          ...newProduct,
-          category: newProduct.category || selectedCatObj
-        };
-        setProducts([...products, productWithCategory]);
+        await createProduct(payload);
       }
+
+      // Re-consultar el catálogo fresco del servidor para garantizar sincronía total
+      await fetchProducts();
 
       setIsModalOpen(false);
       setEditingProductId(null);
@@ -262,7 +269,7 @@ export const AdminProducts = () => {
         price: '', 
         stock: '', 
         unit: 'kg', 
-        categoryId: '1', 
+        categoryId: categories.length > 0 ? String(categories[0].id) : '1', 
         imageUrl: '',
         price2kg: '',
         discount2kg: '',
@@ -382,9 +389,11 @@ export const AdminProducts = () => {
                   />
                 </div>
 
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-bold text-slate-600 mb-1">Stock</label>
+                <div className="col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-bold text-slate-700 mb-1">
+                      Stock Disponible ({formData.unit})
+                    </label>
                     <input 
                       required 
                       type="number" 
@@ -392,21 +401,37 @@ export const AdminProducts = () => {
                       step="any"
                       value={formData.stock} 
                       onChange={e => setFormData({...formData, stock: e.target.value})} 
-                      className="w-full p-3 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none font-semibold text-slate-800" 
+                      className={`w-full p-3 rounded-xl border outline-none font-bold text-slate-800 transition-colors ${
+                        Number(formData.stock) > 0 
+                          ? 'border-emerald-300 bg-white focus:border-emerald-500' 
+                          : 'border-amber-300 bg-amber-50/50 focus:border-amber-500'
+                      }`} 
                       placeholder="Ej: 50"
                     />
+                    {Number(formData.stock) > 0 ? (
+                      <p className="text-[11px] text-emerald-700 font-bold mt-1.5 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                        <span>Visible en tienda online ({Number(formData.stock)} {formData.unit} disponibles)</span>
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-amber-700 font-bold mt-1.5 flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                        <span>Stock en 0: Se ocultará de la tienda online automáticamente</span>
+                      </p>
+                    )}
                   </div>
-                  <div className="w-1/3">
-                    <label className="block text-sm font-bold text-slate-600 mb-1">Unidad</label>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Unidad</label>
                     <select 
                       value={formData.unit} 
                       onChange={e => setFormData({...formData, unit: e.target.value})} 
-                      className="w-full p-3 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none bg-white font-medium"
+                      className="w-full p-3 rounded-xl border border-slate-200 focus:border-emerald-500 outline-none bg-white font-bold text-slate-700"
                     >
-                      <option value="kg">kg</option>
-                      <option value="und">und</option>
-                      <option value="gr">gr</option>
+                      <option value="kg">kg (Kilos)</option>
+                      <option value="und">und (Unidades)</option>
+                      <option value="gr">gr (Gramos)</option>
                     </select>
+                    <p className="text-[10px] text-slate-400 mt-1 font-medium">Unidad para la venta</p>
                   </div>
                 </div>
 
@@ -647,13 +672,29 @@ export const AdminProducts = () => {
                     </td>
                     <td className="px-6 py-4">
                       {Number(product.stock) <= 0 ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 font-black text-xs rounded-lg border border-red-200">
-                          ⚠️ Sin Stock (Oculto en web)
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 font-black text-xs rounded-lg border border-red-200">
+                            ⚠️ Sin Stock (Oculto en web)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleQuickSetStock(product, 20)}
+                            className="text-[11px] text-emerald-700 hover:text-emerald-900 font-bold hover:underline cursor-pointer flex items-center gap-1 transition-colors"
+                            title="Asignar 20 unidades/kilos para publicar de inmediato en la tienda web"
+                          >
+                            + Activar con 20 {product.unit}
+                          </button>
+                        </div>
                       ) : (
-                        <span className={`font-bold ${Number(product.stock) > 10 ? 'text-slate-700' : 'text-amber-600'}`}>
-                          {Number(product.stock)} {product.unit}
-                        </span>
+                        <div className="flex flex-col gap-0.5 items-start">
+                          <span className={`font-black text-sm ${Number(product.stock) > 10 ? 'text-slate-800' : 'text-amber-600'}`}>
+                            {Number(product.stock)} {product.unit}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Visible en web
+                          </span>
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4">

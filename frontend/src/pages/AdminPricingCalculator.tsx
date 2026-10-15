@@ -65,6 +65,13 @@ export const AdminPricingCalculator = () => {
   const [discount2kgPercent, setDiscount2kgPercent] = useState<number>(10);
   const [discount3kgPercent, setDiscount3kgPercent] = useState<number>(15);
 
+  // Estados de Stock y Sincronización
+  const [currentProductStock, setCurrentProductStock] = useState<number>(0);
+  const [productUnit, setProductUnit] = useState<string>('kg');
+  const [applyStockToStore, setApplyStockToStore] = useState<boolean>(true);
+  const [stockMode, setStockMode] = useState<'replace' | 'add'>('replace');
+  const [customStockAmount, setCustomStockAmount] = useState<string>('');
+
   // Estados de guardado
   const [isUpdatingStore, setIsUpdatingStore] = useState<boolean>(false);
   const [updateSuccessMessage, setUpdateSuccessMessage] = useState<string | null>(null);
@@ -95,6 +102,10 @@ export const AdminPricingCalculator = () => {
   const selectProduct = (p: Product) => {
     setSelectedProductId(String(p.id));
     setProductName(p.name);
+    setCurrentProductStock(p.stock !== undefined && p.stock !== null ? Number(p.stock) : 0);
+    setProductUnit(p.unit || 'kg');
+    setCustomStockAmount('');
+
     // Intentar adivinar preset según categoría o nombre
     const lower = (p.name + ' ' + (p.category?.name || '')).toLowerCase();
     const matchedPreset = WASTE_PRESETS.find(preset => 
@@ -168,10 +179,17 @@ export const AdminPricingCalculator = () => {
   const profitMarginActual = projectedRevenue > 0 ? (netProfit / projectedRevenue) * 100 : 0;
   const roiActual = totalPackageInvestment > 0 ? (netProfit / totalPackageInvestment) * 100 : 0;
 
+  // Kilos vendibles sugeridos y stock a impactar
+  const baseSellableStock = Number(netSellableKg.toFixed(2));
+  const effectiveStockInput = customStockAmount !== '' ? Number(customStockAmount) : baseSellableStock;
+  const stockToApply = stockMode === 'add'
+    ? Number((currentProductStock + effectiveStockInput).toFixed(2))
+    : Number(effectiveStockInput.toFixed(2));
+
   // Guardar directo en producto existente
   const handleApplyToStore = async () => {
     if (!selectedProductId) {
-      alert('Selecciona un producto del catálogo para actualizar sus precios.');
+      alert('Selecciona un producto del catálogo para actualizar sus precios y stock.');
       return;
     }
 
@@ -179,16 +197,24 @@ export const AdminPricingCalculator = () => {
       setIsUpdatingStore(true);
       setUpdateSuccessMessage(null);
 
-      await updateProduct(Number(selectedProductId), {
+      const payload: any = {
         price: finalSalePrice1kg,
         price2kg: finalPrice2kg,
         discount2kg: discount2kgPercent,
         price3kg: finalPrice3kg,
         discount3kg: discount3kgPercent
-      });
+      };
 
-      setUpdateSuccessMessage(`¡Precios de "${productName || 'Producto'}" actualizados en la tienda online con éxito!`);
-      fetchCatalog();
+      if (applyStockToStore) {
+        payload.stock = Math.max(0, stockToApply);
+      }
+
+      await updateProduct(Number(selectedProductId), payload);
+
+      setUpdateSuccessMessage(
+        `¡Precios ${applyStockToStore ? `y Stock (${stockToApply} ${productUnit})` : ''} de "${productName || 'Producto'}" actualizados en la tienda online con éxito!`
+      );
+      await fetchCatalog();
       setTimeout(() => setUpdateSuccessMessage(null), 6000);
     } catch (err: any) {
       alert('Error al actualizar el producto: ' + err.message);
@@ -699,6 +725,79 @@ export const AdminPricingCalculator = () => {
                 </span>
               </div>
             </div>
+
+            {/* OPCIÓN DE ACTUALIZACIÓN DE STOCK EN TIENDA */}
+            {selectedProductId && (
+              <div className="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-black text-emerald-400 select-none">
+                    <input
+                      type="checkbox"
+                      checked={applyStockToStore}
+                      onChange={e => setApplyStockToStore(e.target.checked)}
+                      className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-400 cursor-pointer accent-emerald-500"
+                    />
+                    <span>Actualizar Stock en Tienda Web</span>
+                  </label>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${currentProductStock > 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+                    Stock actual: {currentProductStock} {productUnit}
+                  </span>
+                </div>
+
+                {applyStockToStore && (
+                  <div className="space-y-2.5 pt-2 border-t border-slate-700/60 text-xs">
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setStockMode('replace')}
+                        className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                          stockMode === 'replace'
+                            ? 'bg-emerald-500 text-slate-900 shadow-sm'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                      >
+                        Fijar nuevo stock
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStockMode('add')}
+                        className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                          stockMode === 'add'
+                            ? 'bg-emerald-500 text-slate-900 shadow-sm'
+                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                      >
+                        + Sumar a existencia
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 pt-0.5">
+                      <span className="text-slate-300 text-[11px]">
+                        {stockMode === 'add' ? 'Kilos a sumar del lote:' : 'Kilos vendibles a fijar:'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          step="any"
+                          min="0"
+                          value={customStockAmount !== '' ? customStockAmount : baseSellableStock}
+                          onChange={e => setCustomStockAmount(e.target.value)}
+                          className="w-20 px-2 py-1 bg-slate-900 border border-slate-600 rounded-lg text-xs font-bold text-emerald-400 text-right focus:outline-none focus:border-emerald-500"
+                        />
+                        <span className="text-slate-400 font-bold text-[11px]">{productUnit}</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/80 p-2.5 rounded-xl flex items-center justify-between text-[11px] border border-slate-700/50">
+                      <span className="text-slate-400">Stock resultante en web:</span>
+                      <span className={`font-black ${stockToApply > 0 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {stockToApply} {productUnit} {stockToApply > 0 ? '• ✅ Visible en tienda' : '• ⚠️ Oculto (Stock 0)'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* BOTÓN APLICAR SI HAY PRODUCTO */}
             {selectedProductId ? (
