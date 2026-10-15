@@ -191,7 +191,7 @@ export const bulkImportProducts = async (req: Request, res: Response) => {
       const rowNum = i + 1;
 
       try {
-        const name = (item.name || '').trim();
+        const name = (item.name || '').replace(/[;,]+$/, '').trim();
         if (!name) {
           errors.push({ row: rowNum, error: 'El nombre del producto es obligatorio' });
           continue;
@@ -204,9 +204,9 @@ export const bulkImportProducts = async (req: Request, res: Response) => {
         }
 
         const stock = cleanNumber(item.stock) ?? 0;
-        const unit = (item.unit || 'kg').trim();
-        const description = item.description ? String(item.description).trim() : null;
-        const imageUrl = item.imageUrl ? String(item.imageUrl).trim() : null;
+        const unit = (item.unit || 'kg').replace(/[;,]+$/, '').trim();
+        const description = item.description ? String(item.description).replace(/[;,]+$/, '').trim() : null;
+        const imageUrl = item.imageUrl ? String(item.imageUrl).replace(/[;,]+$/, '').trim() : null;
         const price2kg = cleanNumber(item.price2kg);
         const discount2kg = cleanNumber(item.discount2kg);
         const price3kg = cleanNumber(item.price3kg);
@@ -300,9 +300,9 @@ export const bulkImportProducts = async (req: Request, res: Response) => {
       updated: updatedCount,
       errors
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error en bulkImportProducts:', error);
-    res.status(500).json({ error: 'Error interno al importar productos masivamente' });
+    res.status(500).json({ error: error.message || 'Error interno al importar productos masivamente' });
   }
 };
 

@@ -255,8 +255,15 @@ export const bulkImportProducts = async (items: any[]): Promise<BulkImportRespon
     body: JSON.stringify({ items })
   });
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || 'Error al importar productos masivamente');
+    const rawText = await response.text();
+    let errMsg = '';
+    try {
+      const err = JSON.parse(rawText);
+      errMsg = err.error || err.message;
+    } catch {
+      errMsg = `Servidor respondió ${response.status} (${rawText || response.statusText})`;
+    }
+    throw new Error(errMsg || `Error ${response.status} al importar productos`);
   }
   return response.json();
 };

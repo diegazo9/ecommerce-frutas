@@ -212,17 +212,19 @@ export const parseProductsFile = async (
             continue;
           }
 
-          const rawName = headerMap['name'] !== undefined ? String(row[headerMap['name']] || '').trim() : '';
-          const rawCategory = headerMap['category'] !== undefined ? String(row[headerMap['category']] || '').trim() : 'General';
+          const cleanCellStr = (val: any) => String(val || '').replace(/[;,]+$/, '').trim();
+
+          const rawName = headerMap['name'] !== undefined ? cleanCellStr(row[headerMap['name']]) : '';
+          const rawCategory = headerMap['category'] !== undefined ? cleanCellStr(row[headerMap['category']]) : 'General';
           const rawPrice = headerMap['price'] !== undefined ? parseNum(row[headerMap['price']]) : null;
           const rawStock = headerMap['stock'] !== undefined ? parseNum(row[headerMap['stock']]) : 0;
-          const rawUnit = headerMap['unit'] !== undefined ? String(row[headerMap['unit']] || 'kg').trim() : 'kg';
-          const rawDescription = headerMap['description'] !== undefined ? String(row[headerMap['description']] || '').trim() : '';
+          const rawUnit = headerMap['unit'] !== undefined ? cleanCellStr(row[headerMap['unit']]) || 'kg' : 'kg';
+          const rawDescription = headerMap['description'] !== undefined ? cleanCellStr(row[headerMap['description']]) : '';
           const rawPrice2kg = headerMap['price2kg'] !== undefined ? parseNum(row[headerMap['price2kg']]) : null;
           const rawDiscount2kg = headerMap['discount2kg'] !== undefined ? parseNum(row[headerMap['discount2kg']]) : null;
           const rawPrice3kg = headerMap['price3kg'] !== undefined ? parseNum(row[headerMap['price3kg']]) : null;
           const rawDiscount3kg = headerMap['discount3kg'] !== undefined ? parseNum(row[headerMap['discount3kg']]) : null;
-          const rawImageUrl = headerMap['imageUrl'] !== undefined ? String(row[headerMap['imageUrl']] || '').trim() : '';
+          const rawImageUrl = headerMap['imageUrl'] !== undefined ? cleanCellStr(row[headerMap['imageUrl']]) : '';
 
           let status: 'valid' | 'warning' | 'error' = 'valid';
           let statusMessage = '';
