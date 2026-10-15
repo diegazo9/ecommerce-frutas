@@ -1,5 +1,5 @@
 import { Outlet, Link, Navigate, useLocation } from 'react-router-dom';
-import { Package, LogOut, LayoutDashboard, Settings, ShoppingBag, FolderTree, Truck, Users, Wallet, MapPin } from 'lucide-react';
+import { Package, LogOut, LayoutDashboard, Settings, ShoppingBag, FolderTree, Truck, Users, Wallet, MapPin, Calculator } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const AdminLayout = () => {
@@ -13,6 +13,7 @@ export const AdminLayout = () => {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
     { icon: Package, label: 'Productos', path: '/admin/products' },
+    { icon: Calculator, label: 'Precios & Mermas', path: '/admin/pricing-calculator' },
     { icon: FolderTree, label: 'Categorías', path: '/admin/categories' },
     { icon: ShoppingBag, label: 'Pedidos', path: '/admin/orders' },
     { icon: MapPin, label: 'Rutas de Entrega', path: '/admin/routes' },

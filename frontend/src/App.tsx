@@ -20,6 +20,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminUsers } from './pages/AdminUsers';
 import { AdminFinance } from './pages/AdminFinance';
 import { AdminDeliveryRoutes } from './pages/AdminDeliveryRoutes';
+import { AdminPricingCalculator } from './pages/AdminPricingCalculator';
 import { Login } from './pages/Login';
 import { CustomerProfile } from './pages/CustomerProfile';
 
@@ -48,6 +49,7 @@ function App() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
+              <Route path="pricing-calculator" element={<AdminPricingCalculator />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="routes" element={<AdminDeliveryRoutes />} />

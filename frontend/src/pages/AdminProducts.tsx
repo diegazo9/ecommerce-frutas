@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadImage } from '../services/api';
 import type { Product, Category } from '../services/api';
-import { Plus, Edit2, Trash2, Loader2, AlertCircle, X, Tag, FileSpreadsheet } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, AlertCircle, X, Tag, FileSpreadsheet, Calculator } from 'lucide-react';
 import { ProductExcelImportModal } from '../components/ProductExcelImportModal';
 
 export const AdminProducts = () => {
@@ -284,11 +285,19 @@ export const AdminProducts = () => {
           <h2 className="text-3xl font-black text-slate-800">Catálogo de Productos y Combos</h2>
           <p className="text-slate-500 mt-1">Administra tus frutas, verduras, combos y descuentos por volumen.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link 
+            to="/admin/pricing-calculator"
+            className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-4 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-sm hover:scale-[1.02] transition-transform cursor-pointer text-sm"
+            title="Calcular costos de compra, mermas de descarte y márgenes de ganancia"
+          >
+            <Calculator className="w-5 h-5 text-amber-600" />
+            <span>Precios & Mermas</span>
+          </Link>
           <button 
             type="button"
             onClick={() => setIsExcelModalOpen(true)}
-            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-sm hover:scale-[1.02] transition-transform cursor-pointer"
+            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-4 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-sm hover:scale-[1.02] transition-transform cursor-pointer text-sm"
             title="Importar catálogo o actualizar stock masivamente desde Excel o CSV"
           >
             <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
@@ -297,7 +306,7 @@ export const AdminProducts = () => {
           <button 
             type="button"
             onClick={openCreateModal}
-            className="btn-gradient text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-transform cursor-pointer"
+            className="btn-gradient text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-transform cursor-pointer text-sm"
           >
             <Plus className="w-5 h-5" />
             <span>Nuevo Producto</span>
@@ -649,6 +658,13 @@ export const AdminProducts = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <Link 
+                          to={`/admin/pricing-calculator?productId=${product.id}`}
+                          className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer" 
+                          title="Calcular costos, merma y precio de este producto"
+                        >
+                          <Calculator className="w-4 h-4" />
+                        </Link>
                         <button 
                           onClick={() => handleEdit(product)} 
                           className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer" 
