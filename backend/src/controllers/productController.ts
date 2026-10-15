@@ -169,3 +169,140 @@ export const deleteProduct = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Error al eliminar producto' });
   }
 };
+
+export const bulkImportProducts = async (req: Request, res: Response) => {
+  try {
+    const { items } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'La lista de productos está vacía o es inválida' });
+    }
+
+    // Pre-cargar categorías existentes
+    const existingCategories = await prisma.category.findMany();
+    const categoryMap = new Map<string, number>();
+    existingCategories.forEach(c => categoryMap.set(c.name.trim().toLowerCase(), c.id));
+
+    let createdCount = 0;
+    let updatedCount = 0;
+    const errors: { row: number; name?: string; error: string }[] = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const rowNum = i + 1;
+
+      try {
+        const name = (item.name || '').trim();
+        if (!name) {
+          errors.push({ row: rowNum, error: 'El nombre del producto es obligatorio' });
+          continue;
+        }
+
+        const price = cleanNumber(item.price);
+        if (price === null || price < 0) {
+          errors.push({ row: rowNum, name, error: 'El precio debe ser un número válido mayor o igual a 0' });
+          continue;
+        }
+
+        const stock = cleanNumber(item.stock) ?? 0;
+        const unit = (item.unit || 'kg').trim();
+        const description = item.description ? String(item.description).trim() : null;
+        const imageUrl = item.imageUrl ? String(item.imageUrl).trim() : null;
+        const price2kg = cleanNumber(item.price2kg);
+        const discount2kg = cleanNumber(item.discount2kg);
+        const price3kg = cleanNumber(item.price3kg);
+        const discount3kg = cleanNumber(item.discount3kg);
+
+        // Resolver categoría
+        let categoryId: number | null = null;
+        if (item.categoryId && !isNaN(Number(item.categoryId))) {
+          categoryId = Number(item.categoryId);
+        } else if (item.category || item.categoryName) {
+          const catName = String(item.category || item.categoryName).trim();
+          const lowerCatName = catName.toLowerCase();
+          if (categoryMap.has(lowerCatName)) {
+            categoryId = categoryMap.get(lowerCatName)!;
+          } else if (catName) {
+            // Auto crear categoría
+            const newCat = await prisma.category.create({
+              data: { name: catName }
+            });
+            categoryMap.set(lowerCatName, newCat.id);
+            categoryId = newCat.id;
+          }
+        }
+
+        if (!categoryId) {
+          if (existingCategories.length > 0) {
+            categoryId = existingCategories[0].id;
+          } else {
+            const generalCat = await prisma.category.create({ data: { name: 'General' } });
+            categoryMap.set('general', generalCat.id);
+            categoryId = generalCat.id;
+          }
+        }
+
+        // Buscar si ya existe por ID o por nombre
+        let existingProduct = null;
+        if (item.id && !isNaN(Number(item.id))) {
+          existingProduct = await prisma.product.findUnique({ where: { id: Number(item.id) } });
+        }
+        if (!existingProduct) {
+          existingProduct = await prisma.product.findFirst({
+            where: { name: { equals: name, mode: 'insensitive' } }
+          });
+        }
+
+        if (existingProduct) {
+          await prisma.product.update({
+            where: { id: existingProduct.id },
+            data: {
+              name,
+              description: description !== null ? description : existingProduct.description,
+              price,
+              stock,
+              unit,
+              categoryId,
+              imageUrl: imageUrl || existingProduct.imageUrl,
+              price2kg,
+              discount2kg,
+              price3kg,
+              discount3kg
+            }
+          });
+          updatedCount++;
+        } else {
+          await prisma.product.create({
+            data: {
+              name,
+              description,
+              price,
+              stock,
+              unit,
+              categoryId,
+              imageUrl,
+              price2kg,
+              discount2kg,
+              price3kg,
+              discount3kg
+            }
+          });
+          createdCount++;
+        }
+      } catch (rowError: any) {
+        errors.push({ row: rowNum, name: item.name, error: rowError.message || 'Error al procesar fila' });
+      }
+    }
+
+    res.json({
+      success: true,
+      total: items.length,
+      created: createdCount,
+      updated: updatedCount,
+      errors
+    });
+  } catch (error) {
+    console.error('Error en bulkImportProducts:', error);
+    res.status(500).json({ error: 'Error interno al importar productos masivamente' });
+  }
+};
+

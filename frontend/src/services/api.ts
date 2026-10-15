@@ -240,6 +240,27 @@ export const deleteProduct = async (id: number): Promise<void> => {
   if (!response.ok) throw new Error('Error eliminando producto');
 };
 
+export interface BulkImportResponse {
+  success: boolean;
+  total: number;
+  created: number;
+  updated: number;
+  errors: Array<{ row: number; name?: string; error: string }>;
+}
+
+export const bulkImportProducts = async (items: any[]): Promise<BulkImportResponse> => {
+  const response = await fetch(`${API_URL}/products/bulk`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ items })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al importar productos masivamente');
+  }
+  return response.json();
+};
+
 export const createCategory = async (categoryData: Partial<Category>): Promise<Category> => {
   const response = await fetch(`${API_URL}/products/categories`, {
     method: 'POST',

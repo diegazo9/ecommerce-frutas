@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, uploadImage } from '../services/api';
 import type { Product, Category } from '../services/api';
-import { Plus, Edit2, Trash2, Loader2, AlertCircle, X, Tag } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, AlertCircle, X, Tag, FileSpreadsheet } from 'lucide-react';
+import { ProductExcelImportModal } from '../components/ProductExcelImportModal';
 
 export const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -10,6 +11,7 @@ export const AdminProducts = () => {
   const [error, setError] = useState<string | null>(null);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -277,18 +279,30 @@ export const AdminProducts = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h2 className="text-3xl font-black text-slate-800">Catálogo de Productos y Combos</h2>
           <p className="text-slate-500 mt-1">Administra tus frutas, verduras, combos y descuentos por volumen.</p>
         </div>
-        <button 
-          onClick={openCreateModal}
-          className="btn-gradient text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-transform cursor-pointer"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Nuevo Producto / Combo</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            type="button"
+            onClick={() => setIsExcelModalOpen(true)}
+            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-sm hover:scale-[1.02] transition-transform cursor-pointer"
+            title="Importar catálogo o actualizar stock masivamente desde Excel o CSV"
+          >
+            <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+            <span>Cargar con Excel</span>
+          </button>
+          <button 
+            type="button"
+            onClick={openCreateModal}
+            className="btn-gradient text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-transform cursor-pointer"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Nuevo Producto</span>
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -654,6 +668,18 @@ export const AdminProducts = () => {
           </table>
         </div>
       </div>
+
+      {/* Modal Carga Masiva Excel */}
+      <ProductExcelImportModal
+        isOpen={isExcelModalOpen}
+        onClose={() => setIsExcelModalOpen(false)}
+        onSuccess={() => {
+          fetchProducts();
+          fetchCategoriesData();
+        }}
+        existingProducts={products}
+        categories={categories}
+      />
     </div>
   );
 };
