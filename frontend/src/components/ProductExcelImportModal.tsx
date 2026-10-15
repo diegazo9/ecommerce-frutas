@@ -16,7 +16,14 @@ import {
   parseProductsFile, 
   type ParsedProductRow 
 } from '../utils/excelTemplate';
-import { bulkImportProducts, type BulkImportResponse, type Product } from '../services/api';
+import { 
+  bulkImportProducts, 
+  createProduct, 
+  updateProduct, 
+  createCategory, 
+  type BulkImportResponse, 
+  type Product 
+} from '../services/api';
 
 interface ProductExcelImportModalProps {
   isOpen: boolean;
@@ -38,6 +45,7 @@ export const ProductExcelImportModal = ({
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'valid' | 'warning' | 'error'>('all');
   const [importResult, setImportResult] = useState<BulkImportResponse | null>(null);
 
@@ -116,6 +124,8 @@ export const ProductExcelImportModal = ({
 
     try {
       setIsImporting(true);
+      setImportProgress(null);
+
       const itemsPayload = validRows.map(r => ({
         name: r.name,
         category: r.category,
@@ -130,13 +140,91 @@ export const ProductExcelImportModal = ({
         imageUrl: r.imageUrl || null
       }));
 
-      const res = await bulkImportProducts(itemsPayload);
+      let res: BulkImportResponse;
+
+      try {
+        res = await bulkImportProducts(itemsPayload);
+      } catch (bulkErr: any) {
+        const errStr = String(bulkErr.message || '');
+        const is404 = errStr.includes('404') || errStr.includes('Cannot POST');
+        if (!is404) {
+          throw bulkErr;
+        }
+
+        // Fallback automático: Si el backend en el servidor todavía no se reinició y da 404,
+        // importamos fila por fila usando las rutas individuales estándar.
+        let createdCount = 0;
+        let updatedCount = 0;
+        const errors: Array<{ row: number; name?: string; error: string }> = [];
+
+        const catMap = new Map<string, number>();
+        categories.forEach(c => catMap.set(c.name.trim().toLowerCase(), c.id));
+
+        for (let i = 0; i < validRows.length; i++) {
+          const r = validRows[i];
+          setImportProgress(`Importando ${i + 1} de ${validRows.length}: ${r.name}...`);
+
+          try {
+            const catName = (r.category || 'General').trim();
+            const lowerCat = catName.toLowerCase();
+            let categoryId = catMap.get(lowerCat);
+
+            if (!categoryId) {
+              try {
+                const newCat = await createCategory({ name: catName });
+                categoryId = newCat.id;
+                catMap.set(lowerCat, newCat.id);
+              } catch {
+                categoryId = categories[0]?.id || 1;
+              }
+            }
+
+            const existing = existingProducts.find(
+              p => p.name.trim().toLowerCase() === r.name.trim().toLowerCase()
+            );
+
+            const productPayload: any = {
+              name: r.name,
+              categoryId,
+              price: r.price,
+              stock: r.stock,
+              unit: r.unit,
+              description: r.description || null,
+              imageUrl: r.imageUrl || null,
+              price2kg: r.price2kg,
+              discount2kg: r.discount2kg,
+              price3kg: r.price3kg,
+              discount3kg: r.discount3kg
+            };
+
+            if (existing) {
+              await updateProduct(existing.id, productPayload);
+              updatedCount++;
+            } else {
+              await createProduct(productPayload);
+              createdCount++;
+            }
+          } catch (rowErr: any) {
+            errors.push({ row: r.rowNumber, name: r.name, error: rowErr.message || 'Error al guardar producto' });
+          }
+        }
+
+        res = {
+          success: true,
+          total: validRows.length,
+          created: createdCount,
+          updated: updatedCount,
+          errors
+        };
+      }
+
       setImportResult(res);
       onSuccess();
     } catch (err: any) {
       alert('Error al importar productos: ' + (err.message || 'Error desconocido'));
     } finally {
       setIsImporting(false);
+      setImportProgress(null);
     }
   };
 
@@ -517,7 +605,7 @@ export const ProductExcelImportModal = ({
               {isImporting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Importando a la base de datos...</span>
+                  <span>{importProgress || 'Importando a la base de datos...'}</span>
                 </>
               ) : (
                 <>
