@@ -28,13 +28,15 @@ export const Combos = () => {
     c.name.toLowerCase().includes('bolsón')
   );
 
-  const comboProducts = products.filter(p => 
-    (comboCategory && p.categoryId === comboCategory.id) ||
-    p.name.toLowerCase().includes('combo') ||
-    p.name.toLowerCase().includes('bolsón') ||
-    p.name.toLowerCase().includes('bolson') ||
-    p.name.toLowerCase().includes('pack')
-  );
+  const comboProducts = products
+    .filter(p => Number(p.stock) > 0)
+    .filter(p => 
+      (comboCategory && p.categoryId === comboCategory.id) ||
+      p.name.toLowerCase().includes('combo') ||
+      p.name.toLowerCase().includes('bolsón') ||
+      p.name.toLowerCase().includes('bolson') ||
+      p.name.toLowerCase().includes('pack')
+    );
 
   if (loading) {
     return (

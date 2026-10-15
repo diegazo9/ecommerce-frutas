@@ -15,7 +15,7 @@ export const AdminDashboard = () => {
     if (!token) return;
     Promise.all([
       getOrders(token),
-      getProducts()
+      getProducts(true)
     ]).then(([ordersData, productsData]) => {
       setOrders(ordersData);
       setProducts(productsData);

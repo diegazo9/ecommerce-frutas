@@ -77,7 +77,7 @@ export const AdminProducts = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const data = await getProducts();
+      const data = await getProducts(true);
       setProducts(data);
     } catch (err: any) {
       setError(err.message);
@@ -623,9 +623,15 @@ export const AdminProducts = () => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`font-bold ${Number(product.stock) > 10 ? 'text-slate-700' : 'text-red-500'}`}>
-                        {Number(product.stock)} {product.unit}
-                      </span>
+                      {Number(product.stock) <= 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 font-black text-xs rounded-lg border border-red-200">
+                          ⚠️ Sin Stock (Oculto en web)
+                        </span>
+                      ) : (
+                        <span className={`font-bold ${Number(product.stock) > 10 ? 'text-slate-700' : 'text-amber-600'}`}>
+                          {Number(product.stock)} {product.unit}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">

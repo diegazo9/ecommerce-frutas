@@ -50,7 +50,14 @@ export const deleteCategory = async (req: Request, res: Response) => {
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
+    const { all, includeOutOfStock } = req.query;
+    const showAll = all === 'true' || includeOutOfStock === 'true';
+
+    // Por defecto para la tienda web: sólo mostrar productos con stock mayor a cero
+    const where = showAll ? {} : { stock: { gt: 0 } };
+
     const products = await prisma.product.findMany({
+      where,
       include: { category: true }
     });
     res.json(products);

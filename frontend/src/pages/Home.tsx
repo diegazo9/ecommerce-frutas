@@ -64,9 +64,11 @@ export const Home = () => {
     );
   }
 
+  const inStockProducts = products.filter(p => Number(p.stock) > 0);
+
   const filteredProducts = selectedCategory === null 
-    ? products 
-    : products.filter(p => p.categoryId === selectedCategory);
+    ? inStockProducts 
+    : inStockProducts.filter(p => p.categoryId === selectedCategory);
 
   const citricosCat = categories.find(c => c?.name && (c.name.toLowerCase().includes('cítrico') || c.name.toLowerCase().includes('citrico')));
   const hojasCat = categories.find(c => c?.name && (c.name.toLowerCase().includes('hoja') || c.name.toLowerCase().includes('verdura')));

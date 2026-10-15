@@ -51,8 +51,9 @@ export interface Order {
   [key: string]: any;
 }
 
-export const getProducts = async (): Promise<Product[]> => {
-  const response = await fetch(`${API_URL}/products`);
+export const getProducts = async (includeOutOfStock: boolean = false): Promise<Product[]> => {
+  const url = includeOutOfStock ? `${API_URL}/products?all=true` : `${API_URL}/products`;
+  const response = await fetch(url);
   if (!response.ok) throw new Error('Error fetch products');
   return response.json();
 };

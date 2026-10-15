@@ -36,6 +36,15 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
       const product = await prisma.product.findUnique({ where: { id: Number(item.productId) } });
       if (!product) return res.status(404).json({ error: `Producto con ID ${item.productId} no encontrado` });
 
+      if (Number(product.stock) <= 0) {
+        return res.status(400).json({ error: `El producto "${product.name}" se encuentra sin stock disponible.` });
+      }
+      if (Number(product.stock) < quantity) {
+        return res.status(400).json({ 
+          error: `Solo disponemos de ${Number(product.stock)} ${product.unit} de "${product.name}". Por favor ajusta la cantidad en el carrito.` 
+        });
+      }
+
       let itemPrice = Number(product.price);
       let itemTotal = itemPrice * quantity;
 
@@ -126,6 +135,22 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
         }
       }
     });
+
+    // Descontar automáticamente el stock del inventario
+    for (const item of items) {
+      try {
+        await prisma.product.update({
+          where: { id: Number(item.productId) },
+          data: {
+            stock: {
+              decrement: Number(item.quantity)
+            }
+          }
+        });
+      } catch (stockErr) {
+        console.warn(`No se pudo descontar stock para producto ID ${item.productId}:`, stockErr);
+      }
+    }
 
     // Si es pago en efectivo contra entrega
     if (paymentMethod === 'cash') {
