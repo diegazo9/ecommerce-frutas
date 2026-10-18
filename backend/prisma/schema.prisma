@@ -87,3 +87,22 @@ model ShippingZone {
 
   @@map("shipping_zones")
 }
+
+model EmailSetting {
+  id               Int      @id @default(autoincrement())
+  host             String   @default("mail.vibranfrut.com.ar")
+  port             Int      @default(587)
+  secure           Boolean  @default(false)
+  user             String   @default("info@vibranfrut.com.ar")
+  password         String?
+  fromName         String   @default("Vibranfrut") @map("from_name")
+  fromEmail        String   @default("info@vibranfrut.com.ar") @map("from_email")
+  replyTo          String?  @map("reply_to")
+  bccAdmin         Boolean  @default(true) @map("bcc_admin")
+  sendOnOrder      Boolean  @default(true) @map("send_on_order")
+  sendOnDelivery   Boolean  @default(true) @map("send_on_delivery")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("email_settings")
+}

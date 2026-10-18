@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes';
 import orderRoutes from './routes/orderRoutes';
 import shippingRoutes from './routes/shippingRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import settingsRoutes from './routes/settingsRoutes';
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/shipping-zones', shippingRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/settings', settingsRoutes);
 
 const PORT = process.env.PORT || 3000;
 

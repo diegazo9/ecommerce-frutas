@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { prisma } from '../prisma';
 import { AuthRequest } from '../middlewares/auth';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
+import { sendOrderConfirmationEmail, sendOrderDispatchedEmail } from '../services/emailService';
+import { generateOrderPdf } from '../services/pdfService';
 
 // Configuración de Mercado Pago
 const client = new MercadoPagoConfig({ 
@@ -134,6 +136,11 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
           create: orderItemsData
         }
       }
+    });
+
+    // Enviar correo de confirmación con PDF adjunto al cliente y aviso a info@vibranfrut.com.ar
+    sendOrderConfirmationEmail(order.id).catch(emailErr => {
+      console.warn(`[OrderController] No se pudo enviar el correo de confirmación para pedido #${order.id}:`, emailErr);
     });
 
     // Descontar automáticamente el stock del inventario
@@ -573,4 +580,117 @@ export const getOrderFinances = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Error al obtener reporte financiero' });
   }
 };
+
+/**
+ * Descarga el comprobante PDF oficial de un pedido
+ */
+export const downloadOrderPdf = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const role = req.user?.role;
+
+    const order = await prisma.order.findUnique({
+      where: { id: Number(id) },
+      include: {
+        user: true,
+        shippingZone: true,
+        items: { include: { product: true } }
+      }
+    });
+
+    if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    if (role !== 'ADMIN' && order.userId !== userId) {
+      return res.status(403).json({ error: 'No tienes permiso para ver este comprobante' });
+    }
+
+    const pdfBuffer = await generateOrderPdf(order);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="Pedido-Vibranfrut-${order.id}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (error: any) {
+    console.error('Error al generar PDF del pedido:', error);
+    res.status(500).json({ error: 'Error al generar comprobante PDF', details: error?.message });
+  }
+};
+
+/**
+ * Envía el aviso por email de que un pedido está en camino a su domicilio
+ */
+export const notifyOrderDispatched = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Acceso denegado' });
+    const { id } = req.params;
+
+    const order = await prisma.order.findUnique({ where: { id: Number(id) } });
+    if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    if (order.status !== 'ENTREGADO' && order.status !== 'CANCELADO') {
+      await prisma.order.update({
+        where: { id: Number(id) },
+        data: { status: 'EN_CAMINO' }
+      });
+    }
+
+    const sent = await sendOrderDispatchedEmail(Number(id));
+
+    res.json({
+      success: sent,
+      message: sent
+        ? `Aviso enviado exitosamente al cliente del Pedido #${id}`
+        : 'No se pudo enviar el correo (verifica la configuración de Mailcow en Ajustes)'
+    });
+  } catch (error: any) {
+    console.error('Error al notificar despacho:', error);
+    res.status(500).json({ error: 'Error al notificar despacho', details: error?.message });
+  }
+};
+
+/**
+ * Envía avisos masivos a todos los clientes de una ruta de entrega armada
+ */
+export const notifyRouteDispatched = async (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Acceso denegado' });
+    const { orderIds } = req.body;
+
+    if (!Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({ error: 'Debes enviar una lista de IDs de pedidos para la ruta' });
+    }
+
+    let sentCount = 0;
+    const errors: Array<{ orderId: number; error: string }> = [];
+
+    for (const rawId of orderIds) {
+      const orderId = Number(rawId);
+      try {
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (order && order.status !== 'ENTREGADO' && order.status !== 'CANCELADO') {
+          await prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'EN_CAMINO' }
+          });
+        }
+        const ok = await sendOrderDispatchedEmail(orderId);
+        if (ok) sentCount++;
+      } catch (err: any) {
+        errors.push({ orderId, error: err?.message || 'Error al enviar' });
+      }
+    }
+
+    res.json({
+      success: true,
+      total: orderIds.length,
+      sentCount,
+      errors: errors.length > 0 ? errors : undefined,
+      message: `Se enviaron avisos de pedido en camino a ${sentCount} de ${orderIds.length} clientes de la ruta.`
+    });
+  } catch (error: any) {
+    console.error('Error al notificar ruta despachada:', error);
+    res.status(500).json({ error: 'Error al notificar ruta despachada', details: error?.message });
+  }
+};
+
 

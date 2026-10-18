@@ -7,7 +7,10 @@ import {
   cancelOrder,
   payCashOrder,
   payOrderWithMercadoPago,
-  getOrderFinances
+  getOrderFinances,
+  downloadOrderPdf,
+  notifyOrderDispatched,
+  notifyRouteDispatched
 } from '../controllers/orderController';
 import { authenticateToken, requireAdmin } from '../middlewares/auth';
 
@@ -23,6 +26,13 @@ router.post('/webhook', receiveWebhook);
 router.get('/finances', authenticateToken, requireAdmin, getOrderFinances);
 router.get('/', authenticateToken, getOrders);
 router.put('/:id/status', authenticateToken, requireAdmin, updateOrderStatus);
+
+// Descargar comprobante oficial en PDF
+router.get('/:id/pdf', authenticateToken, downloadOrderPdf);
+
+// Notificación de salida / ruta por email
+router.post('/notify-route', authenticateToken, requireAdmin, notifyRouteDispatched);
+router.post('/:id/notify-dispatch', authenticateToken, requireAdmin, notifyOrderDispatched);
 
 // Acciones del cliente sobre su pedido
 router.put('/:id/cancel', authenticateToken, cancelOrder);

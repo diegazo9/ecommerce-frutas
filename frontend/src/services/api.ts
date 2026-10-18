@@ -390,4 +390,96 @@ export const getOrderFinances = async (): Promise<FinanceResponse> => {
   return response.json();
 };
 
+// ==================== CONFIGURACIÓN DE CORREO (MAILCOW) & NOTIFICACIONES ====================
+
+export interface EmailSettings {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  password?: string;
+  fromName: string;
+  fromEmail: string;
+  replyTo?: string;
+  bccAdmin?: boolean;
+  sendOnOrder?: boolean;
+  sendOnDelivery?: boolean;
+}
+
+export const getEmailSettings = async (token?: string): Promise<EmailSettings> => {
+  const response = await fetch(`${API_URL}/settings/email`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders()
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al obtener configuración de correo');
+  }
+  return response.json();
+};
+
+export const updateEmailSettings = async (settings: EmailSettings, token?: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/settings/email`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
+    },
+    body: JSON.stringify(settings)
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al actualizar configuración de correo');
+  }
+  return response.json();
+};
+
+export const testEmailConnection = async (toEmail: string, token?: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_URL}/settings/email/test`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
+    },
+    body: JSON.stringify({ toEmail })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al probar conexión con Mailcow');
+  }
+  return response.json();
+};
+
+export const notifyOrderDispatched = async (orderId: number, token?: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_URL}/orders/${orderId}/notify-dispatch`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders()
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al notificar despacho');
+  }
+  return response.json();
+};
+
+export const notifyRouteDispatched = async (orderIds: number[], token?: string): Promise<{ success: boolean; sentCount: number; message: string }> => {
+  const response = await fetch(`${API_URL}/orders/notify-route`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
+    },
+    body: JSON.stringify({ orderIds })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || 'Error al notificar ruta');
+  }
+  return response.json();
+};
+
+export const getOrderPdfUrl = (orderId: number): string => {
+  return `${API_URL}/orders/${orderId}/pdf`;
+};
+
+
 

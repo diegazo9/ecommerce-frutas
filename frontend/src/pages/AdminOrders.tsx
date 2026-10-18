@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { getOrders, updateOrderStatus } from '../services/api';
+import { getOrders, updateOrderStatus, getOrderPdfUrl } from '../services/api';
 import type { Order } from '../services/api';
 import { Link } from 'react-router-dom';
-import { Loader2, PackageOpen, CheckCircle, Clock, Smartphone, MapPin, Printer, CheckSquare, Square } from 'lucide-react';
+import { Loader2, PackageOpen, CheckCircle, Clock, Smartphone, MapPin, Printer, CheckSquare, Square, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { OrderPrintModal } from '../components/OrderPrintModal';
 
@@ -185,6 +185,16 @@ export const AdminOrders = () => {
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <a
+                        href={getOrderPdfUrl(order.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-700 transition-all"
+                        title="Ver / Descargar comprobante oficial en PDF"
+                      >
+                        <FileText className="w-4 h-4" />
+                      </a>
+
                       <button
                         type="button"
                         onClick={() => handlePrintSingle(order)}

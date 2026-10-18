@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { getOrders, updateOrderStatus } from '../services/api';
+import { getOrders, updateOrderStatus, notifyRouteDispatched, notifyOrderDispatched, getOrderPdfUrl } from '../services/api';
 import type { Order } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { DeliveryRouteMap } from '../components/DeliveryRouteMap';
@@ -27,7 +27,11 @@ import {
   ExternalLink,
   Layers,
   Check,
-  AlertCircle
+  AlertCircle,
+  Send,
+  FileText,
+  Mail,
+  Loader2
 } from 'lucide-react';
 
 export const AdminDeliveryRoutes = () => {
@@ -226,6 +230,64 @@ export const AdminDeliveryRoutes = () => {
     }
   };
 
+  // Estados de despacho y notificación por correo
+  const [isDispatchingRoute, setIsDispatchingRoute] = useState(false);
+  const [notifyingStopId, setNotifyingStopId] = useState<number | null>(null);
+  const [dispatchMessage, setDispatchMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Despachar ruta completa y avisar a todos los clientes por email
+  const handleDispatchEntireRoute = async () => {
+    if (!token) return;
+    const pendingStops = routeStops.filter(s => s.status !== 'ENTREGADO' && s.status !== 'CANCELADO');
+    if (pendingStops.length === 0) {
+      alert('No hay pedidos pendientes en esta ruta para despachar.');
+      return;
+    }
+
+    const confirmMsg = `¿Deseas despachar esta ruta y enviar un correo electrónico a los ${pendingStops.length} clientes avisando que su pedido está en camino?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setIsDispatchingRoute(true);
+      setDispatchMessage(null);
+      const orderIds = pendingStops.map(s => s.orderId);
+      const res = await notifyRouteDispatched(orderIds, token);
+      
+      // Actualizar estado local a EN_CAMINO
+      setRouteStops(prev => prev.map(s => orderIds.includes(s.orderId) ? { ...s, status: 'EN_CAMINO' } : s));
+      setOrders(prev => prev.map(o => orderIds.includes(o.id) ? { ...o, status: 'EN_CAMINO' } : o));
+
+      setDispatchMessage({
+        type: 'success',
+        text: res.message || `¡Ruta despachada! Se enviaron avisos de salida por email a ${res.sentCount} clientes.`
+      });
+      setTimeout(() => setDispatchMessage(null), 8000);
+    } catch (err: any) {
+      setDispatchMessage({
+        type: 'error',
+        text: err.message || 'Error al enviar avisos de ruta por email'
+      });
+    } finally {
+      setIsDispatchingRoute(false);
+    }
+  };
+
+  // Enviar aviso individual por email a un cliente
+  const handleNotifySingleStop = async (orderId: number) => {
+    if (!token) return;
+    try {
+      setNotifyingStopId(orderId);
+      const res = await notifyOrderDispatched(orderId, token);
+      setRouteStops(prev => prev.map(s => s.orderId === orderId ? { ...s, status: 'EN_CAMINO' } : s));
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'EN_CAMINO' } : o));
+      alert(res.message || `Aviso de pedido en camino enviado al cliente del Pedido #${orderId}`);
+    } catch (err: any) {
+      alert('Error al enviar correo: ' + err.message);
+    } finally {
+      setNotifyingStopId(null);
+    }
+  };
+
   // Métricas de la ruta
   const metrics = useMemo(() => {
     return calculateRouteMetrics(depot.coordinates, routeStops);
@@ -281,6 +343,21 @@ export const AdminDeliveryRoutes = () => {
 
           <button
             type="button"
+            onClick={handleDispatchEntireRoute}
+            disabled={isDispatchingRoute || routeStops.length === 0}
+            className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-2 transition-all shadow-md shadow-emerald-600/20 cursor-pointer disabled:opacity-50 hover:scale-[1.02]"
+            title="Avisar por email a todos los clientes que su pedido está en camino y marcar la ruta como despachada"
+          >
+            {isDispatchingRoute ? (
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <Send className="w-4 h-4 text-white" />
+            )}
+            <span>🚚 Despachar y Avisar por Email</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleOptimizeRoute}
             disabled={routeStops.length <= 1}
             className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-amber-950 text-xs font-black flex items-center gap-2 transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"
@@ -313,6 +390,22 @@ export const AdminDeliveryRoutes = () => {
           </button>
         </div>
       </div>
+
+      {/* Banner de resultado de despacho de ruta */}
+      {dispatchMessage && (
+        <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in fade-in shadow-xs ${
+          dispatchMessage.type === 'success'
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            : 'bg-rose-50 border border-rose-200 text-rose-800'
+        }`}>
+          {dispatchMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+          )}
+          <span className="font-bold text-xs">{dispatchMessage.text}</span>
+        </div>
+      )}
 
       {/* Métricas y Resumen de la Ruta */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
@@ -575,6 +668,11 @@ export const AdminDeliveryRoutes = () => {
                       </div>
                       <div className="flex items-center md:justify-end gap-1.5">
                         <span className="text-sm font-black text-slate-900">${stop.total.toFixed(2)}</span>
+                        {stop.status === 'EN_CAMINO' && (
+                          <span className="bg-purple-100 text-purple-800 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                            🚚 En Camino
+                          </span>
+                        )}
                         {stop.status === 'PAGO_EN_EFECTIVO' ? (
                           <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-md">
                             💵 Cobrar Efectivo
@@ -589,6 +687,38 @@ export const AdminDeliveryRoutes = () => {
 
                     {/* Acciones */}
                     <div className="flex items-center gap-1.5">
+                      {/* Email aviso de salida */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNotifySingleStop(stop.orderId);
+                        }}
+                        disabled={notifyingStopId === stop.orderId}
+                        className="p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                        title="Enviar correo avisando al cliente que su pedido ya está en camino a su domicilio"
+                      >
+                        {notifyingStopId === stop.orderId ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                        ) : (
+                          <Mail className="w-4 h-4 text-blue-600" />
+                        )}
+                        <span className="hidden sm:inline">Avisar Salida</span>
+                      </button>
+
+                      {/* PDF Oficial del pedido */}
+                      <a
+                        href={getOrderPdfUrl(stop.orderId)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1 transition-all"
+                        title="Ver o imprimir comprobante oficial en PDF"
+                      >
+                        <FileText className="w-4 h-4 text-slate-600" />
+                        <span className="hidden sm:inline">PDF</span>
+                      </a>
+
                       {/* WhatsApp al cliente */}
                       <a
                         href={`https://wa.me/?text=${encodeURIComponent(
@@ -601,7 +731,7 @@ export const AdminDeliveryRoutes = () => {
                         title="Enviar mensaje por WhatsApp al cliente"
                       >
                         <MessageCircle className="w-4 h-4 text-emerald-600" />
-                        <span className="hidden sm:inline">Aviso</span>
+                        <span className="hidden sm:inline">WhatsApp</span>
                       </a>
 
                       {/* GPS Google Maps individual */}
