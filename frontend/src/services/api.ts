@@ -411,6 +411,12 @@ export const getEmailSettings = async (token?: string): Promise<EmailSettings> =
     headers: token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders()
   });
   if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('El servidor backend aún no se ha reiniciado o actualizado con la última versión de git.');
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Tu sesión ha expirado. Por favor cierra sesión y vuelve a ingresar con tu cuenta de administrador.');
+    }
     const err = await response.json().catch(() => ({}));
     throw new Error(err.error || 'Error al obtener configuración de correo');
   }
@@ -427,6 +433,12 @@ export const updateEmailSettings = async (settings: EmailSettings, token?: strin
     body: JSON.stringify(settings)
   });
   if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('El servidor backend aún no tiene activa la ruta /api/settings. Requiere hacer git pull y reiniciar el backend en el servidor.');
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Tu sesión ha expirado. Por favor cierra sesión y vuelve a ingresar.');
+    }
     const err = await response.json().catch(() => ({}));
     throw new Error(err.error || 'Error al actualizar configuración de correo');
   }
@@ -443,6 +455,12 @@ export const testEmailConnection = async (toEmail: string, settings?: EmailSetti
     body: JSON.stringify({ toEmail, settings })
   });
   if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('El servidor backend aún no tiene activa la ruta de prueba de correo. Requiere reiniciar el proceso del backend en el servidor.');
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('Tu sesión ha expirado. Por favor cierra sesión y vuelve a ingresar.');
+    }
     const err = await response.json().catch(() => ({}));
     throw new Error(err.error || 'Error al probar conexión con Mailcow');
   }
