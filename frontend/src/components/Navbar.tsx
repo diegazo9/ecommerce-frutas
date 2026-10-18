@@ -66,15 +66,27 @@ export const Navbar = () => {
                />
             </div>
 
-            <div className="hidden md:block">
+            {/* User Login / Profile Button - Visible on Mobile and Desktop */}
+            <div className="flex items-center">
               {isAuthenticated ? (
-                <Link to={isAdmin ? "/admin" : "/profile"} className="flex items-center gap-2 p-2 rounded-full hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 transition-colors" title={`Perfil de ${user?.name}`}>
+                <Link 
+                  to={isAdmin ? "/admin" : "/profile"} 
+                  className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-2xl bg-emerald-50/90 hover:bg-emerald-100 text-emerald-800 transition-colors border border-emerald-200/50 shadow-2xs" 
+                  title={`Perfil de ${user?.name}`}
+                >
                   <UserIcon className="w-5 h-5 text-emerald-600" />
+                  <span className="hidden sm:inline text-xs font-bold truncate max-w-[100px]">
+                    {user?.name?.split(' ')[0] || 'Mi Cuenta'}
+                  </span>
                 </Link>
               ) : (
-                <Link to="/login" className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full transition-colors" title="Iniciar Sesión">
+                <Link 
+                  to="/login" 
+                  className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-2xl transition-colors border border-emerald-200/60 shadow-2xs" 
+                  title="Iniciar Sesión"
+                >
                   <UserIcon className="w-4 h-4 text-emerald-600" />
-                  <span>Ingresar</span>
+                  <span className="text-xs font-black">Ingresar</span>
                 </Link>
               )}
             </div>
@@ -98,40 +110,100 @@ export const Navbar = () => {
             
             {/* Mobile Menu Button */}
             <button 
-              className="lg:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              className="lg:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
               onClick={toggleMenu}
+              aria-label="Menú principal"
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMobileMenuOpen ? <X className="h-6 w-6 text-emerald-700" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
       </div>
 
       {/* Mobile Menu Dropdown */}
-      <div className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-[400px] border-t border-slate-200 bg-white' : 'max-h-0'}`}>
-        <div className="px-4 py-4 space-y-2">
-          <div className="mb-4 relative">
-             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-             <input type="text" placeholder="Buscar productos..." className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm" />
+      <div className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-[85vh] border-t border-slate-200 bg-white shadow-2xl overflow-y-auto' : 'max-h-0'}`}>
+        <div className="px-4 py-5 space-y-3">
+          
+          {/* Tarjeta de Cuenta en Menú Móvil */}
+          <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-lime-50 to-amber-50 rounded-2xl border border-emerald-200/60 shadow-xs">
+            {isAuthenticated ? (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-sm">
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-black text-slate-800 truncate">{user?.name}</p>
+                    <p className="text-[10px] text-slate-500 truncate font-medium">{user?.email}</p>
+                  </div>
+                </div>
+                <Link
+                  to={isAdmin ? "/admin" : "/profile"}
+                  onClick={toggleMenu}
+                  className="text-xs font-black text-emerald-800 bg-white px-3.5 py-2 rounded-xl border border-emerald-200 shadow-2xs hover:bg-emerald-50 shrink-0"
+                >
+                  {isAdmin ? 'Panel Admin' : 'Mi Perfil'}
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+                    <UserIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-800">Mi Cuenta</p>
+                    <p className="text-[10px] text-slate-500 font-medium">Inicia sesión o regístrate</p>
+                  </div>
+                </div>
+                <Link
+                  to="/login"
+                  onClick={toggleMenu}
+                  className="text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl shadow-xs transition-colors shrink-0"
+                >
+                  Ingresar
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Buscador móvil */}
+          <div className="relative">
+             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+             <input type="text" placeholder="Buscar productos..." className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-medium" />
           </div>
           
-          <Link to="/" className="block px-4 py-2 text-sm font-bold text-red-600 uppercase" onClick={toggleMenu}>Inicio</Link>
-          <Link to="/productos" className="block px-4 py-2 text-sm font-bold text-slate-600 uppercase" onClick={toggleMenu}>Productos</Link>
-          <Link to="/combos" className="block px-4 py-2 text-sm font-bold text-emerald-600 uppercase" onClick={toggleMenu}>Combos y Bolsones 🧺</Link>
-          <Link to="/nosotros" className="block px-4 py-2 text-sm font-bold text-slate-600 uppercase" onClick={toggleMenu}>Nosotros</Link>
-          <Link to="/envios" className="block px-4 py-2 text-sm font-bold text-slate-600 uppercase" onClick={toggleMenu}>Envíos y Zonas</Link>
-          <Link to="/mayorista" className="block px-4 py-2 text-sm font-bold text-slate-600 uppercase" onClick={toggleMenu}>Mayorista</Link>
-          <Link to="/recetas" className="block px-4 py-2 text-sm font-bold text-slate-600 uppercase" onClick={toggleMenu}>Recetas</Link>
-          
-          {isAuthenticated ? (
-            <Link to={isAdmin ? "/admin" : "/profile"} className="block px-4 py-2 text-sm font-bold text-emerald-600 uppercase border-t border-slate-100 mt-2 pt-4" onClick={toggleMenu}>
-              Mi Perfil
+          <nav className="space-y-1 pt-1 font-bold text-xs">
+            <Link to="/" className="flex items-center justify-between px-3.5 py-2.5 text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/60 rounded-xl uppercase transition-colors" onClick={toggleMenu}>
+              <span>Inicio</span>
+              <span>🏡</span>
             </Link>
-          ) : (
-            <Link to="/login" className="block px-4 py-2 text-sm font-bold text-emerald-600 uppercase border-t border-slate-100 mt-2 pt-4" onClick={toggleMenu}>
-              Entrar
+            <Link to="/productos" className="flex items-center justify-between px-3.5 py-2.5 text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/60 rounded-xl uppercase transition-colors" onClick={toggleMenu}>
+              <span>Productos</span>
+              <span>🍉</span>
             </Link>
-          )}
+            <Link to="/combos" className="flex items-center justify-between px-3.5 py-2.5 text-emerald-700 bg-emerald-50/40 rounded-xl uppercase transition-colors" onClick={toggleMenu}>
+              <span>Combos y Bolsones</span>
+              <span>🧺</span>
+            </Link>
+            <Link to="/nosotros" className="flex items-center justify-between px-3.5 py-2.5 text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/60 rounded-xl uppercase transition-colors" onClick={toggleMenu}>
+              <span>Nosotros</span>
+              <span>🌱</span>
+            </Link>
+            <Link to="/envios" className="flex items-center justify-between px-3.5 py-2.5 text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/60 rounded-xl uppercase transition-colors" onClick={toggleMenu}>
+              <span>Envíos y Zonas</span>
+              <span>🛵</span>
+            </Link>
+            <Link to="/mayorista" className="flex items-center justify-between px-3.5 py-2.5 text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/60 rounded-xl uppercase transition-colors" onClick={toggleMenu}>
+              <span>Mayorista</span>
+              <span>📦</span>
+            </Link>
+            <Link to="/recetas" className="flex items-center justify-between px-3.5 py-2.5 text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/60 rounded-xl uppercase transition-colors" onClick={toggleMenu}>
+              <span>Recetas</span>
+              <span>🥑</span>
+            </Link>
+          </nav>
+
         </div>
       </div>
     </header>
