@@ -13,6 +13,7 @@ model User {
   email         String    @unique
   passwordHash  String?   @map("password_hash")
   role          String    @default("CUSTOMER")
+  isVerified    Boolean   @default(false) @map("is_verified")
   createdAt     DateTime  @default(now()) @map("created_at")
   orders        Order[]
 

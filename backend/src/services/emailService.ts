@@ -542,3 +542,81 @@ export const sendOrderDispatchedEmail = async (orderId: number): Promise<boolean
     return false;
   }
 };
+
+/**
+ * Envía un correo con el botón de validación para nuevos registros de clientes.
+ */
+export const sendVerificationEmail = async (
+  toEmail: string,
+  userName: string,
+  verificationToken: string,
+  clientOrigin?: string
+): Promise<boolean> => {
+  try {
+    const { transporter, settings } = await getTransporter();
+
+    const baseUrl = clientOrigin || process.env.CLIENT_URL || 'https://vibranfrut.com.ar';
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    // Soporte para HashRouter y BrowserRouter
+    const verificationLink = `${cleanBaseUrl}/#/verify-email?token=${encodeURIComponent(verificationToken)}`;
+
+    await transporter.sendMail({
+      from: `"${settings.fromName}" <${settings.fromEmail}>`,
+      to: toEmail,
+      replyTo: settings.replyTo || settings.fromEmail,
+      subject: `🍏 Verifica tu cuenta en Vibranfrut`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8fafc; padding: 24px; border-radius: 16px;">
+          
+          <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 32px 24px; border-radius: 16px 16px 0 0; text-align: center; color: white;">
+            <div style="font-size: 42px; margin-bottom: 8px;">🍏 ✨</div>
+            <h1 style="margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.5px;">¡Bienvenido a Vibranfrut!</h1>
+            <p style="margin: 8px 0 0; font-size: 14px; opacity: 0.95;">Frutas & Verduras Seleccionadas</p>
+          </div>
+
+          <div style="background-color: white; padding: 32px 24px; border-radius: 0 0 16px 16px; border: 1px solid #e2e8f0; border-top: none;">
+            
+            <p style="font-size: 16px; color: #0f172a; margin-top: 0;">
+              Hola <strong>${userName}</strong>,
+            </p>
+            <p style="color: #334155; line-height: 1.6; font-size: 14px;">
+              ¡Muchas gracias por registrarte en nuestra tienda online! Para activar tu cuenta y poder realizar tus compras y envíos con total seguridad, por favor confirma tu dirección de correo electrónico haciendo clic en el siguiente botón:
+            </p>
+
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${verificationLink}" 
+                 style="display: inline-block; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; text-decoration: none; font-size: 15px; font-weight: 800; padding: 15px 32px; border-radius: 14px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);">
+                ✅ Confirmar mi Correo Electrónico
+              </a>
+            </div>
+
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin: 24px 0; font-size: 13px; color: #166534; line-height: 1.5;">
+              <p style="margin: 0;">
+                💡 <em>Este enlace es válido por 24 horas. Si el botón no abre automáticamente, puedes copiar y pegar el siguiente enlace en tu navegador:</em>
+              </p>
+              <p style="margin: 8px 0 0; word-break: break-all; font-size: 11px;">
+                <a href="${verificationLink}" style="color: #047857; text-decoration: underline;">${verificationLink}</a>
+              </p>
+            </div>
+
+            <p style="color: #94a3b8; font-size: 12px; line-height: 1.5; margin-top: 24px;">
+              Si tú no creaste esta cuenta, simplemente desestima este mensaje y no se realizará ninguna acción.
+            </p>
+
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 24px; text-align: center; font-size: 12px; color: #64748b;">
+              <p style="margin: 0; font-weight: 700; color: #0f172a;">Vibranfrut - Frutas y Verduras</p>
+              <p style="margin: 4px 0 0; color: #059669; font-weight: bold;">info@vibranfrut.com.ar</p>
+            </div>
+
+          </div>
+        </div>
+      `
+    });
+
+    console.log(`[EmailService] Correo de verificación enviado con éxito a ${toEmail}`);
+    return true;
+  } catch (error) {
+    console.error(`[EmailService] Error al enviar correo de verificación a ${toEmail}:`, error);
+    return false;
+  }
+};

@@ -23,6 +23,7 @@ import { AdminDeliveryRoutes } from './pages/AdminDeliveryRoutes';
 import { AdminPricingCalculator } from './pages/AdminPricingCalculator';
 import { Login } from './pages/Login';
 import { CustomerProfile } from './pages/CustomerProfile';
+import { VerifyEmail } from './pages/VerifyEmail';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
               <Route path="recetas" element={<Recipes />} />
               <Route path="cart" element={<Cart />} />
               <Route path="profile" element={<CustomerProfile />} />
+              <Route path="verify-email" element={<VerifyEmail />} />
             </Route>
             
             <Route path="/login" element={<Login />} />

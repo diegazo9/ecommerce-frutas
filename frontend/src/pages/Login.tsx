@@ -161,12 +161,12 @@ export const Login = () => {
       
       if (data.token && data.user) {
         loginState(data.token, data.user);
-        setSuccessMsg('¡Cuenta creada con éxito! Redirigiendo...');
+        setSuccessMsg('¡Cuenta creada con éxito! Te enviamos un correo de validación a tu casilla. Redirigiendo a tu perfil...');
         setTimeout(() => {
           navigate('/profile');
-        }, 1200);
+        }, 2000);
       } else {
-        setSuccessMsg('¡Registro completado! Ya puedes iniciar sesión.');
+        setSuccessMsg(data.message || '¡Registro completado! Te enviamos un correo de validación a tu casilla.');
         setActiveTab('login');
       }
     } catch (err: any) {

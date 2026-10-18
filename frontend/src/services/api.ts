@@ -161,6 +161,32 @@ export const googleLogin = async (token: string) => {
   return response.json();
 };
 
+export const verifyEmail = async (token: string): Promise<{ success: boolean; message: string; token?: string; user?: any }> => {
+  const response = await fetch(`${API_URL}/auth/verify-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token })
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Error al verificar correo');
+  }
+  return response.json();
+};
+
+export const resendVerificationEmail = async (email: string): Promise<{ success: boolean; message: string }> => {
+  const response = await fetch(`${API_URL}/auth/resend-verification`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Error al reenviar correo de validación');
+  }
+  return response.json();
+};
+
 export interface ShippingZone {
   id: number;
   name: string;

@@ -9,6 +9,7 @@ import orderRoutes from './routes/orderRoutes';
 import shippingRoutes from './routes/shippingRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 import settingsRoutes from './routes/settingsRoutes';
+import { prisma } from './prisma';
 
 const app = express();
 
@@ -80,6 +81,16 @@ app.use('/api/settings', settingsRoutes);
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`[Agente Backend] Servidor corriendo en el puerto ${PORT}`);
+  
+  // Asegurar que la columna is_verified exista en la tabla users
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
+    `);
+    console.log('[DB] Columna is_verified verificada en tabla users');
+  } catch (err: any) {
+    console.warn('[DB] Nota sobre columna is_verified:', err?.message);
+  }
 });
