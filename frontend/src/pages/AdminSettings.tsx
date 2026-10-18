@@ -101,7 +101,7 @@ export const AdminSettings = () => {
     try {
       setEmailTesting(true);
       setStatusMessage(null);
-      const res = await testEmailConnection(testEmailAddress, token || undefined);
+      const res = await testEmailConnection(testEmailAddress, emailSettings, token || undefined);
       setStatusMessage({
         type: 'success',
         text: res.message || `¡Correo de prueba enviado con éxito a ${testEmailAddress}!`
@@ -241,10 +241,22 @@ export const AdminSettings = () => {
                   >
                     <option value={587}>587 (STARTTLS - Recomendado)</option>
                     <option value={465}>465 (SSL / TLS Directo)</option>
-                    <option value={25}>25 (SMTP Estándar)</option>
+                    <option value={25}>25 (SMTP Estándar - Bloqueado por ISPs)</option>
                   </select>
                 </div>
               </div>
+
+              {emailSettings.port === 25 && (
+                <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-amber-900 text-xs flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-black text-amber-800">⚠️ Advertencia sobre el Puerto 25</p>
+                    <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
+                      El puerto 25 casi siempre está bloqueado por los proveedores de internet (ISP) para evitar spam, y Mailcow lo reserva para intercambio entre servidores de correo sin autenticación de usuarios. Para enviar correos desde tu tienda, <strong>selecciona el Puerto 587 (STARTTLS)</strong> o <strong>Puerto 465 (SSL)</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Credenciales de la cuenta */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">

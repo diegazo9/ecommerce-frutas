@@ -67,18 +67,34 @@ export const testEmailConnection = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Acceso denegado' });
     }
 
-    const { toEmail } = req.body;
+    const { toEmail, settings } = req.body;
     if (!toEmail) {
       return res.status(400).json({ error: 'Debes indicar un correo de destino para la prueba' });
     }
 
-    const result = await sendTestEmail(toEmail);
+    const result = await sendTestEmail(toEmail, settings);
     res.json(result);
   } catch (error: any) {
     console.error('Error en prueba de correo:', error);
+    
+    // Extraer detalles técnicos claros para el usuario
+    let detailMsg = error?.message || 'Error al conectar con el servidor Mailcow';
+    if (error?.code === 'ETIMEDOUT') {
+      detailMsg = `Tiempo de espera agotado (ETIMEDOUT). El servidor o puerto no responde. Si usas el puerto 25, ten en cuenta que la mayoría de proveedores de internet lo bloquean. Usa el puerto 587 (STARTTLS).`;
+    } else if (error?.code === 'ECONNREFUSED') {
+      detailMsg = `Conexión rechazada (ECONNREFUSED). El servidor no está escuchando en ese puerto o la dirección IP/Host es inaccesible.`;
+    } else if (error?.responseCode === 535 || detailMsg.includes('535') || error?.code === 'EAUTH') {
+      detailMsg = `Error de autenticación (535): Usuario o contraseña de la casilla en Mailcow incorrectos. Verifica que el usuario sea la dirección completa (ej. info@vibranfrut.com.ar).`;
+    } else if (error?.code === 'ENOTFOUND') {
+      detailMsg = `No se pudo resolver el host (ENOTFOUND). Verifica que el nombre del servidor esté bien escrito o usa su dirección IP.`;
+    }
+
     res.status(500).json({
       success: false,
-      error: error?.message || 'Error al conectar con el servidor Mailcow / SMTP. Verifica los datos y puertos.'
+      error: detailMsg,
+      code: error?.code,
+      command: error?.command,
+      rawError: error?.message
     });
   }
 };

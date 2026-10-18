@@ -162,19 +162,44 @@ export const saveEmailSettings = async (settings: EmailSettingsPayload): Promise
 /**
  * Inicializa y retorna el transportador Nodemailer con las configuraciones activas.
  */
-const getTransporter = async (): Promise<{ transporter: Transporter; settings: EmailSettingsPayload }> => {
-  const settings = await getEmailSettings();
+const getTransporter = async (overrideSettings?: EmailSettingsPayload): Promise<{ transporter: Transporter; settings: EmailSettingsPayload }> => {
+  const settings = overrideSettings || await getEmailSettings();
   const currentHash = `${settings.host}:${settings.port}:${settings.user}:${settings.password}:${settings.secure}`;
+
+  if (overrideSettings) {
+    // Si viene una configuración temporal para prueba, creamos un transportador nuevo
+    const testTransporter = nodemailer.createTransport({
+      host: settings.host,
+      port: Number(settings.port),
+      secure: Boolean(settings.secure), // true para 465 SSL, false para 587 STARTTLS
+      requireTLS: settings.port === 587,
+      auth: settings.user && settings.password ? {
+        user: settings.user,
+        pass: settings.password
+      } : undefined,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+    return { transporter: testTransporter, settings };
+  }
 
   if (!cachedTransporter || lastSettingsHash !== currentHash) {
     cachedTransporter = nodemailer.createTransport({
       host: settings.host,
       port: Number(settings.port),
       secure: Boolean(settings.secure), // true para 465, false para 587
+      requireTLS: settings.port === 587,
       auth: settings.user && settings.password ? {
         user: settings.user,
         pass: settings.password
       } : undefined,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
       tls: {
         // En servidores Mailcow internos o con certificados autofirmados / Let's Encrypt
         rejectUnauthorized: false
@@ -190,8 +215,8 @@ const getTransporter = async (): Promise<{ transporter: Transporter; settings: E
 /**
  * Envía un correo de prueba para verificar conectividad con Mailcow / SMTP.
  */
-export const sendTestEmail = async (toEmail: string): Promise<{ success: boolean; message: string }> => {
-  const { transporter, settings } = await getTransporter();
+export const sendTestEmail = async (toEmail: string, overrideSettings?: EmailSettingsPayload): Promise<{ success: boolean; message: string }> => {
+  const { transporter, settings } = await getTransporter(overrideSettings);
 
   // Verificar conexión con el servidor
   await transporter.verify();

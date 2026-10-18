@@ -433,14 +433,14 @@ export const updateEmailSettings = async (settings: EmailSettings, token?: strin
   return response.json();
 };
 
-export const testEmailConnection = async (toEmail: string, token?: string): Promise<{ success: boolean; message: string }> => {
+export const testEmailConnection = async (toEmail: string, settings?: EmailSettings, token?: string): Promise<{ success: boolean; message: string }> => {
   const response = await fetch(`${API_URL}/settings/email/test`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { 'Authorization': `Bearer ${token}` } : getAuthHeaders())
     },
-    body: JSON.stringify({ toEmail })
+    body: JSON.stringify({ toEmail, settings })
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
