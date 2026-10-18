@@ -87,6 +87,8 @@ export const testEmailConnection = async (req: AuthRequest, res: Response) => {
       detailMsg = `Error de autenticación (535): Usuario o contraseña de la casilla en Mailcow incorrectos. Verifica que el usuario sea la dirección completa (ej. info@vibranfrut.com.ar).`;
     } else if (error?.code === 'ENOTFOUND') {
       detailMsg = `No se pudo resolver el host (ENOTFOUND). Verifica que el nombre del servidor esté bien escrito o usa su dirección IP.`;
+    } else if (error?.responseCode === 554 || detailMsg.includes('554') || detailMsg.includes('Access denied') || detailMsg.includes('Client host rejected')) {
+      detailMsg = `Acceso denegado por Mailcow (554 Client host rejected). Esto ocurre si la conexión no se autenticó (falta la contraseña de la casilla en el campo 'Contraseña del Buzón'), o si se usó el puerto 25. Asegúrate de ingresar la contraseña y seleccionar el puerto 587 (STARTTLS).`;
     }
 
     res.status(500).json({

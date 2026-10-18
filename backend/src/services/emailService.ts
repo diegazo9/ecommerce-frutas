@@ -163,8 +163,23 @@ export const saveEmailSettings = async (settings: EmailSettingsPayload): Promise
  * Inicializa y retorna el transportador Nodemailer con las configuraciones activas.
  */
 const getTransporter = async (overrideSettings?: EmailSettingsPayload): Promise<{ transporter: Transporter; settings: EmailSettingsPayload }> => {
-  const settings = overrideSettings || await getEmailSettings();
+  let settings: EmailSettingsPayload;
+  if (overrideSettings) {
+    const saved = await getEmailSettings();
+    settings = {
+      ...saved,
+      ...overrideSettings,
+      password: (overrideSettings.password && overrideSettings.password.trim() !== '') ? overrideSettings.password : saved.password
+    };
+  } else {
+    settings = await getEmailSettings();
+  }
+
   const currentHash = `${settings.host}:${settings.port}:${settings.user}:${settings.password}:${settings.secure}`;
+
+  if (!settings.password || settings.password.trim() === '') {
+    throw new Error('Falta la contraseña de la casilla en Mailcow. Ingrésala en el campo "Contraseña del Buzón" para autenticar la conexión.');
+  }
 
   if (overrideSettings) {
     // Si viene una configuración temporal para prueba, creamos un transportador nuevo
@@ -173,10 +188,10 @@ const getTransporter = async (overrideSettings?: EmailSettingsPayload): Promise<
       port: Number(settings.port),
       secure: Boolean(settings.secure), // true para 465 SSL, false para 587 STARTTLS
       requireTLS: settings.port === 587,
-      auth: settings.user && settings.password ? {
+      auth: {
         user: settings.user,
         pass: settings.password
-      } : undefined,
+      },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
@@ -193,10 +208,10 @@ const getTransporter = async (overrideSettings?: EmailSettingsPayload): Promise<
       port: Number(settings.port),
       secure: Boolean(settings.secure), // true para 465, false para 587
       requireTLS: settings.port === 587,
-      auth: settings.user && settings.password ? {
+      auth: {
         user: settings.user,
         pass: settings.password
-      } : undefined,
+      },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,

@@ -98,6 +98,14 @@ export const AdminSettings = () => {
       return;
     }
 
+    if (!emailSettings.password || emailSettings.password.trim() === '') {
+      setStatusMessage({
+        type: 'error',
+        text: 'Por favor ingresa la Contraseña del Buzón en el formulario antes de enviar el correo de prueba.'
+      });
+      return;
+    }
+
     try {
       setEmailTesting(true);
       setStatusMessage(null);
