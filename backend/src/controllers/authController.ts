@@ -34,15 +34,41 @@ export const register = async (req: Request, res: Response) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Seguridad: forzar siempre rol CUSTOMER en registro público (evita escalada de privilegios)
-    const user = await prisma.user.create({
-      data: {
-        name: name.trim(),
-        email: cleanEmail,
-        passwordHash,
-        role: 'CUSTOMER',
-        isVerified: false
+    let user;
+    try {
+      user = await prisma.user.create({
+        data: {
+          name: name.trim(),
+          email: cleanEmail,
+          passwordHash,
+          role: 'CUSTOMER',
+          isVerified: false
+        }
+      });
+    } catch (createErr: any) {
+      if (createErr.code === 'P2002' && createErr.meta?.target?.includes('id')) {
+        // La secuencia users_id_seq en PostgreSQL quedó desfasada respecto a MAX(id). Corregir y reintentar.
+        console.warn('[Register] Secuencia id desfasada (P2002). Sincronizando secuencia en PostgreSQL...');
+        try {
+          await prisma.$executeRawUnsafe(`
+            SELECT setval(pg_get_serial_sequence('users', 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM users), 0), 1));
+          `);
+        } catch (syncErr) {
+          console.error('[Register] Error sincronizando secuencia:', syncErr);
+        }
+        user = await prisma.user.create({
+          data: {
+            name: name.trim(),
+            email: cleanEmail,
+            passwordHash,
+            role: 'CUSTOMER',
+            isVerified: false
+          }
+        });
+      } else {
+        throw createErr;
       }
-    });
+    }
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
       expiresIn: '1d'

@@ -93,4 +93,22 @@ app.listen(PORT, async () => {
   } catch (err: any) {
     console.warn('[DB] Nota sobre columna is_verified:', err?.message);
   }
+
+  // Asegurar que las secuencias de IDs en PostgreSQL estén sincronizadas con MAX(id)
+  try {
+    await prisma.$executeRawUnsafe(`
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
+          PERFORM setval(pg_get_serial_sequence('users', 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM users), 0), 1));
+        END IF;
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'orders') THEN
+          PERFORM setval(pg_get_serial_sequence('orders', 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM orders), 0), 1));
+        END IF;
+      END $$;
+    `);
+    console.log('[DB] Secuencias de PostgreSQL sincronizadas exitosamente');
+  } catch (seqErr: any) {
+    console.warn('[DB] Nota sobre sincronización de secuencias:', seqErr?.message);
+  }
 });

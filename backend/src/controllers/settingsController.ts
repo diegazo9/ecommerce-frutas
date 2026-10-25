@@ -80,7 +80,7 @@ export const testEmailConnection = async (req: AuthRequest, res: Response) => {
     // Extraer detalles técnicos claros para el usuario
     let detailMsg = error?.message || 'Error al conectar con el servidor Mailcow';
     if (error?.code === 'ETIMEDOUT') {
-      detailMsg = `Tiempo de espera agotado (ETIMEDOUT). El servidor o puerto no responde. Si usas el puerto 25, ten en cuenta que la mayoría de proveedores de internet lo bloquean. Usa el puerto 587 (STARTTLS).`;
+      detailMsg = `Tiempo de espera agotado (ETIMEDOUT). El servidor Mailcow no respondió a tiempo. Si Mailcow y el backend están en la misma red local o Proxmox, los routers suelen bloquear el acceso al dominio público por NAT Loopback: coloca la IP local de tu Mailcow (ej. 192.168.1.xxx) en el campo 'Servidor Host'.`;
     } else if (error?.code === 'ECONNREFUSED') {
       detailMsg = `Conexión rechazada (ECONNREFUSED). El servidor no está escuchando en ese puerto o la dirección IP/Host es inaccesible.`;
     } else if (error?.responseCode === 535 || detailMsg.includes('535') || error?.code === 'EAUTH') {
