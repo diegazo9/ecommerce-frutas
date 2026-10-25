@@ -13,7 +13,7 @@ export const About = () => {
           <div className="text-center p-6 bg-emerald-50 rounded-2xl">
             <div className="text-3xl mb-3">🌱</div>
             <h3 className="font-bold text-emerald-800 mb-2">100% Fresco</h3>
-            <p className="text-sm text-emerald-600">De la huerta a tu casa en menos de 24 hs.</p>
+            <p className="text-sm text-emerald-600">Directo a tu casa en menos de 24 hs con la mejor calidad.</p>
           </div>
           <div className="text-center p-6 bg-emerald-50 rounded-2xl">
             <div className="text-3xl mb-3">🤝</div>

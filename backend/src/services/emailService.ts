@@ -350,7 +350,7 @@ export const sendOrderConfirmationEmail = async (orderId: number): Promise<boole
           <!-- Encabezado con marca -->
           <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 24px; border-radius: 16px 16px 0 0; text-align: center; color: white;">
             <h1 style="margin: 0; font-size: 26px; font-weight: 900; letter-spacing: 1px;">VIBRANFRUT</h1>
-            <p style="margin: 6px 0 0; font-size: 13px; opacity: 0.95;">Frutas & Verduras Frescas del Huerto</p>
+            <p style="margin: 6px 0 0; font-size: 13px; opacity: 0.95;">Frutas & Verduras Seleccionadas</p>
           </div>
 
           <!-- Tarjeta Principal -->

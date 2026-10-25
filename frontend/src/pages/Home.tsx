@@ -99,9 +99,9 @@ export const Home = () => {
       badgeText: 'TEMPORADA PRIMAVERA 2026',
       badgeSub: 'COSECHA DEL DÍA 🍓',
       badgeIcon: '🌸',
-      title: 'Frutas del Huerto,',
+      title: 'Frutas Seleccionadas,',
       highlight: 'Llenas de Sol y Alegría 🌻',
-      desc: 'Descubre los sabores más dulces, jugosos y radiantes de la estación. Directo de la planta a tu hogar, con aroma y frescura insuperables.',
+      desc: 'Descubre los sabores más dulces, jugosos y radiantes de la estación. Directo a tu hogar, con aroma y frescura insuperables.',
       bgImage: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=2000&auto=format&fit=crop',
       accentGradients: 'from-amber-300/35 via-rose-300/25 to-emerald-300/35',
       btnPrimary: { text: 'Explorar Frutería 🍓', onClick: () => scrollToCatalog(null) },
@@ -109,10 +109,10 @@ export const Home = () => {
     },
     {
       id: 2,
-      badgeText: 'COMBO HUERTO FAMILIAR',
+      badgeText: 'BOLSÓN FAMILIAR',
       badgeSub: '¡AHORRÁ HASTA 25%! 🧺',
       badgeIcon: '🧺',
-      title: 'Bolsón Huerto Familiar,',
+      title: 'Bolsón Familiar Semanal,',
       highlight: 'Frutas y Verduras Frescas 🥑',
       desc: 'El mix más completo y rendidor: manzanas crujientes, cítricos de jugo, hojas verdes frescas y papas de campo para toda la semana.',
       bgImage: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=2000&auto=format&fit=crop',
@@ -130,7 +130,7 @@ export const Home = () => {
       desc: 'Naranjas de zumo extra jugosas, pomelos rosados refrescantes y limones aromáticos para comenzar el día con máxima vitalidad.',
       bgImage: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?q=80&w=2000&auto=format&fit=crop',
       accentGradients: 'from-orange-400/35 via-amber-300/30 to-yellow-300/35',
-      btnPrimary: { text: 'Ver Cítricos de Huerta 🍊', onClick: () => scrollToCatalog(citricosCat ? citricosCat.id : null) },
+      btnPrimary: { text: 'Ver Cítricos Frescos 🍊', onClick: () => scrollToCatalog(citricosCat ? citricosCat.id : null) },
       btnSecondary: { text: 'Recetas con Cítricos 🍹', to: '/recetas' }
     },
     {
@@ -140,7 +140,7 @@ export const Home = () => {
       badgeIcon: '🥗',
       title: 'Bolsón Hojas Verdes,',
       highlight: 'Espinaca, Rúcula y Acelga 🌿',
-      desc: 'Hojas tiernas y crujientes ricas en hierro, cosechadas esta mañana y listas para tus mejores ensaladas de huerto.',
+      desc: 'Hojas tiernas y crujientes ricas en hierro, cosechadas esta mañana y listas para tus mejores ensaladas frescas.',
       bgImage: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=2000&auto=format&fit=crop',
       accentGradients: 'from-emerald-500/35 via-green-300/30 to-lime-300/35',
       btnPrimary: { text: 'Ver Verduras de Hoja 🥗', onClick: () => scrollToCatalog(hojasCat ? hojasCat.id : null) },
@@ -274,7 +274,7 @@ export const Home = () => {
             <Sprout className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="font-black text-slate-800 text-sm">100% Huerta Natural</h4>
+            <h4 className="font-black text-slate-800 text-sm">100% Natural</h4>
             <p className="text-slate-500 text-xs font-medium">Frutas sanas y vivas</p>
           </div>
         </div>

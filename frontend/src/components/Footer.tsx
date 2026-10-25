@@ -15,7 +15,7 @@ export const Footer = () => {
               </div>
               <div>
                 <span className="font-black text-2xl text-white tracking-tight">VibranFrut</span>
-                <span className="block text-[10px] uppercase font-black tracking-widest text-amber-300">Huerto de Primavera 🌸</span>
+                <span className="block text-[10px] uppercase font-black tracking-widest text-amber-300">Frutas & Verduras Frescas 🍓</span>
               </div>
             </div>
             <p className="text-sm leading-relaxed font-medium text-emerald-100/80">
@@ -26,7 +26,7 @@ export const Footer = () => {
             <h3 className="text-white font-black mb-6 tracking-wide text-base uppercase text-emerald-300">Explorar</h3>
             <ul className="space-y-3 font-semibold text-sm">
               <li><a href="/" className="hover:text-amber-300 transition-colors flex items-center gap-2"><span>🍓</span> Catálogo de Frutas</a></li>
-              <li><a href="/nosotros" className="hover:text-amber-300 transition-colors flex items-center gap-2"><span>🌱</span> Nuestro Huerto</a></li>
+              <li><a href="/nosotros" className="hover:text-amber-300 transition-colors flex items-center gap-2"><span>🌱</span> Quiénes Somos</a></li>
               <li><a href="/envios" className="hover:text-amber-300 transition-colors flex items-center gap-2"><span>🛵</span> Zonas de Entrega</a></li>
               <li><a href="/recetas" className="hover:text-amber-300 transition-colors flex items-center gap-2"><span>🥑</span> Recetas Primaverales</a></li>
             </ul>

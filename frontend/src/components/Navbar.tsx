@@ -18,7 +18,7 @@ export const Navbar = () => {
         <span className="flex items-center justify-center gap-2">
           <span>🌸</span>
           <span className="hidden sm:inline">¡Bienvenida la Primavera!</span>
-          <span className="font-medium">Frutas frescas de huerto a tu mesa</span>
+          <span className="font-medium">Frutas y verduras frescas a tu mesa</span>
           <span className="hidden md:inline">· 🚚 Envíos en el día</span>
           <span className="bg-white/25 px-2 py-0.5 rounded-full text-[10px] uppercase font-black">100% Fresco 🍓</span>
         </span>
@@ -37,7 +37,7 @@ export const Navbar = () => {
                 <span className="font-black text-2xl tracking-tight text-slate-800 flex items-center gap-1 group-hover:text-emerald-700 transition-colors">
                   VibranFrut <span className="text-sm">🌿</span>
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 -mt-1">Huerto & Frutería</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 -mt-1">Frutas & Verduras Seleccionadas</span>
               </div>
             </Link>
           </div>

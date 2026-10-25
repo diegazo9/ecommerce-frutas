@@ -69,7 +69,7 @@ export const Combos = () => {
           </div>
 
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
-            Combos del Huerto, <br />
+            Combos Seleccionados, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-emerald-300 to-teal-200">
               Listos para tu Mesa 🧺
             </span>

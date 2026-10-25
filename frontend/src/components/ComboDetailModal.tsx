@@ -13,7 +13,7 @@ export interface ComboItem {
 export const getComboItems = (combo: Product, allProducts: Product[] = []): ComboItem[] => {
   const name = combo.name.toLowerCase();
 
-  // 1. Bolsón Huerto Familiar (8 kg)
+  // 1. Bolsón Familiar (8 kg)
   if (name.includes('huerto familiar') || name.includes('familiar')) {
     return [
       {
@@ -43,7 +43,7 @@ export const getComboItems = (combo: Product, allProducts: Product[] = []): Comb
       {
         name: 'Zanahorias Frescas',
         quantity: '1 kg',
-        benefit: 'Crocantes y dulces con hojas frescas de huerta',
+        benefit: 'Crocantes, dulces y frescas de estación',
         imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500&q=80'
       },
       {
@@ -79,11 +79,11 @@ export const getComboItems = (combo: Product, allProducts: Product[] = []): Comb
     ];
   }
 
-  // 3. Combo Ensaladas de Huerta Fresca
+  // 3. Combo Ensaladas Frescas
   if (name.includes('ensalada') || name.includes('huerta fresca') || name.includes('hojas')) {
     return [
       {
-        name: 'Espinaca Fresca de Huerta',
+        name: 'Espinaca Fresca de Estación',
         quantity: '2 atados',
         benefit: 'Hojas tiernas para ensaladas crudas o cocidas',
         imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=500&q=80'
@@ -128,7 +128,7 @@ export const getComboItems = (combo: Product, allProducts: Product[] = []): Comb
       return {
         name: matchedProd?.name || (cleanName.charAt(0).toUpperCase() + cleanName.slice(1)),
         quantity,
-        benefit: 'Seleccionado fresco de huerta',
+        benefit: 'Seleccionado fresco de estación',
         imageUrl: matchedProd?.imageUrl || 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&q=80'
       };
     });

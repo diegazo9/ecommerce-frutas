@@ -68,7 +68,7 @@ export const generateOrderPdf = async (order: OrderPdfData): Promise<Buffer> => 
       doc.fillColor(primaryColor)
         .fontSize(9)
         .font('Helvetica-Bold')
-        .text('FRUTAS & VERDURAS SELECCIONADAS DEL HUERTO', 40, 84);
+        .text('FRUTAS & VERDURAS SELECCIONADAS', 40, 84);
 
       doc.fillColor(textMuted)
         .fontSize(8)
@@ -280,7 +280,7 @@ export const generateOrderPdf = async (order: OrderPdfData): Promise<Buffer> => 
       doc.fillColor(textMuted)
         .fontSize(7.5)
         .font('Helvetica')
-        .text('Vibranfrut • Productos frescos del huerto • Contacto: info@vibranfrut.com.ar • Argentina', 40, footerY + 25, { align: 'center', width: doc.page.width - 80 });
+        .text('Vibranfrut • Frutas y verduras frescas • Contacto: info@vibranfrut.com.ar • Argentina', 40, footerY + 25, { align: 'center', width: doc.page.width - 80 });
 
       doc.end();
     } catch (error) {

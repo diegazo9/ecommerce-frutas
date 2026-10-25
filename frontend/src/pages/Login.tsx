@@ -195,7 +195,7 @@ export const Login = () => {
           {activeTab === 'login' ? 'Bienvenido a VibranFrut 🍓' : 'Crea tu Cuenta 🌸'}
         </h1>
         <p className="text-center text-slate-500 mb-6 text-xs sm:text-sm font-medium">
-          {activeTab === 'login' ? 'Ingresa para disfrutar de tus frutas frescas' : 'Únete para pedir directo del huerto a tu mesa'}
+          {activeTab === 'login' ? 'Ingresa para disfrutar de tus frutas frescas' : 'Únete para pedir las mejores frutas y verduras a tu mesa'}
         </p>
 
         {/* Selector de Pestañas: Login vs Registro */}

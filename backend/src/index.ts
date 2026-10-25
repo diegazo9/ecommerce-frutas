@@ -111,4 +111,20 @@ app.listen(PORT, async () => {
   } catch (seqErr: any) {
     console.warn('[DB] Nota sobre sincronización de secuencias:', seqErr?.message);
   }
+
+  // Limpiar menciones de Huerta / Huerto en los productos de la base de datos
+  try {
+    await prisma.$executeRawUnsafe(`
+      UPDATE products SET name = REPLACE(name, 'Huerto Familiar', 'Familiar Semanal') WHERE name LIKE '%Huerto Familiar%';
+      UPDATE products SET name = REPLACE(name, 'de Huerta Fresca', 'Frescas') WHERE name LIKE '%de Huerta Fresca%';
+      UPDATE products SET name = REPLACE(name, 'de Huerta', 'Fresca') WHERE name LIKE '%de Huerta%';
+      UPDATE products SET name = REPLACE(name, 'del Huerto', 'Fresca') WHERE name LIKE '%del Huerto%';
+      UPDATE products SET description = REPLACE(description, 'del huerto', 'de estación') WHERE description LIKE '%del huerto%';
+      UPDATE products SET description = REPLACE(description, 'de la huerta', 'de estación') WHERE description LIKE '%de la huerta%';
+      UPDATE products SET description = REPLACE(description, 'de huerta', 'de estación') WHERE description LIKE '%de huerta%';
+    `);
+    console.log('[DB] Productos actualizados sin referencias a huerta');
+  } catch (cleanErr: any) {
+    console.warn('[DB] Nota sobre actualización de productos:', cleanErr?.message);
+  }
 });
