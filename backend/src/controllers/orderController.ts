@@ -108,8 +108,12 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
     let initialStatus = 'PENDIENTE';
     if (paymentMethod === 'cash') {
       initialStatus = 'PAGO_EN_EFECTIVO';
-    } else if (paymentMethod === 'modo' || paymentMethod === 'transfer') {
-      initialStatus = 'PENDIENTE_MODO';
+    } else if (paymentMethod === 'transfer') {
+      initialStatus = 'PENDIENTE_TRANSFERENCIA';
+    } else if (paymentMethod === 'qr' || paymentMethod === 'modo') {
+      initialStatus = 'PENDIENTE_QR';
+    } else if (paymentMethod === 'mercadopago' || paymentMethod === 'card') {
+      initialStatus = 'PENDIENTE_MERCADOPAGO';
     }
 
     // Concatenar notas de entrega, documento del comprador y cambio en efectivo si corresponden
@@ -170,16 +174,16 @@ export const createOrderAndPreference = async (req: AuthRequest, res: Response) 
       });
     }
 
-    // Si es pago mediante MODO o Transferencia bancaria
-    if (paymentMethod === 'modo' || paymentMethod === 'transfer') {
+    // Si es pago mediante QR, MODO o Transferencia bancaria
+    if (paymentMethod === 'qr' || paymentMethod === 'modo' || paymentMethod === 'transfer') {
       return res.status(201).json({
         orderId: order.id,
         paymentMethod,
         status: order.status,
         total,
-        message: paymentMethod === 'modo'
-          ? 'Pedido registrado con éxito para abonar con MODO o App bancaria.'
-          : 'Pedido registrado con éxito para abonar mediante Transferencia bancaria.'
+        message: paymentMethod === 'transfer'
+          ? 'Pedido registrado con éxito para abonar mediante Transferencia bancaria.'
+          : 'Pedido registrado con éxito para abonar mediante Código QR.'
       });
     }
 
