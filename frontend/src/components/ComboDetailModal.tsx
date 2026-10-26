@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Check, ShoppingBag, Sparkles, Truck, ShieldCheck, Leaf, Scale } from 'lucide-react';
 import type { Product } from '../services/api';
+import { cleanText } from '../services/api';
 import { useCart } from '../context/CartContext';
 
 export interface ComboItem {
@@ -366,7 +367,7 @@ export const ProductDetailModal = ({
                 )}
               </div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight drop-shadow-sm">
-                {targetProduct.name}
+                {cleanText(targetProduct.name)}
               </h2>
             </div>
           </div>
@@ -375,7 +376,7 @@ export const ProductDetailModal = ({
             {/* Descripción general y atributos de frescura */}
             <div>
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-medium">
-                {targetProduct.description || 'Fruto cosechado en su punto óptimo de maduración, fresco y seleccionado especialmente para tu mesa.'}
+                {cleanText(targetProduct.description) || 'Fruto cosechado en su punto óptimo de maduración, fresco y seleccionado especialmente para tu mesa.'}
               </p>
 
               <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-100 mt-4">

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getShippingZones, API_URL } from '../services/api';
+import { getShippingZones, API_URL, cleanText } from '../services/api';
 import type { ShippingZone } from '../services/api';
 
 const VIBRANFRUT_ALIAS = 'vibranfrut.mp';
@@ -233,7 +233,7 @@ export const Cart = () => {
                         {item.formatLabel}
                       </span>
                     )}
-                    <h3 className="text-base font-bold text-slate-800">{item.name}</h3>
+                    <h3 className="text-base font-bold text-slate-800">{cleanText(item.name)}</h3>
                     <p className="text-slate-400 text-xs font-medium">
                       {item.purchaseMode === 'unit' && item.unit === 'kg' 
                         ? `$${(Number(item.price) * (item.unitFactor || 0.25)).toFixed(2)} / unid.`

@@ -31,7 +31,7 @@ async function main() {
   const catVerduras = await prisma.category.create({
     data: {
       name: 'Verduras de Hoja',
-      description: 'Verduras frescas y crujientes directas de la huerta.',
+      description: 'Verduras frescas y crujientes de cosecha diaria.',
       imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&q=80',
     }
   });

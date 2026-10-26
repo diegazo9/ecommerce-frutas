@@ -40,7 +40,7 @@ async function main() {
   // 2. Combo products to insert if not present
   const combos = [
     {
-      name: 'Bolsón Huerto Familiar (8 kg)',
+      name: 'Bolsón Familiar Semanal (8 kg)',
       description: 'Mix rendidor de temporada: 2kg Manzanas, 2kg Naranjas de Jugo, 1kg Bananas, 1kg Papas, 1kg Zanahorias y 1 atado de Espinaca fresca.',
       price: 1000.00,
       stock: 50.00,
@@ -58,8 +58,8 @@ async function main() {
       imageUrl: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=800&q=80'
     },
     {
-      name: 'Combo Ensaladas de Huerta Fresca',
-      description: 'Directo de la tierra a tu plato: 2 atados de Espinaca, 2 atados de Rúcula crocante, 1 planta de Lechuga romana y 500g Tomates Cherry dulces.',
+      name: 'Combo Ensaladas Frescas',
+      description: 'Directo del campo a tu plato: 2 atados de Espinaca, 2 atados de Rúcula crocante, 1 planta de Lechuga romana y 500g Tomates Cherry dulces.',
       price: 1000.00,
       stock: 35.00,
       unit: 'und',

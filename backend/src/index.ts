@@ -114,15 +114,59 @@ app.listen(PORT, async () => {
 
   // Limpiar menciones de Huerta / Huerto en los productos de la base de datos
   try {
-    await prisma.$executeRawUnsafe(`
-      UPDATE products SET name = REPLACE(name, 'Huerto Familiar', 'Familiar Semanal') WHERE name LIKE '%Huerto Familiar%';
-      UPDATE products SET name = REPLACE(name, 'de Huerta Fresca', 'Frescas') WHERE name LIKE '%de Huerta Fresca%';
-      UPDATE products SET name = REPLACE(name, 'de Huerta', 'Fresca') WHERE name LIKE '%de Huerta%';
-      UPDATE products SET name = REPLACE(name, 'del Huerto', 'Fresca') WHERE name LIKE '%del Huerto%';
-      UPDATE products SET description = REPLACE(description, 'del huerto', 'de estación') WHERE description LIKE '%del huerto%';
-      UPDATE products SET description = REPLACE(description, 'de la huerta', 'de estación') WHERE description LIKE '%de la huerta%';
-      UPDATE products SET description = REPLACE(description, 'de huerta', 'de estación') WHERE description LIKE '%de huerta%';
-    `);
+    const productsToClean = await prisma.product.findMany();
+    for (const p of productsToClean) {
+      let changed = false;
+      let newName = p.name;
+      let newDesc = p.description || '';
+
+      if (/huerto familiar/i.test(newName)) {
+        newName = newName.replace(/huerto familiar/gi, 'Familiar Semanal');
+        changed = true;
+      }
+      if (/bols[oó]n huerto/i.test(newName)) {
+        newName = newName.replace(/bols[oó]n huerto/gi, 'Bolsón');
+        changed = true;
+      }
+      if (/de huerta fresca/i.test(newName)) {
+        newName = newName.replace(/de huerta fresca/gi, 'Frescas');
+        changed = true;
+      }
+      if (/de huerta/i.test(newName)) {
+        newName = newName.replace(/de huerta/gi, 'Fresca');
+        changed = true;
+      }
+      if (/del huerto/i.test(newName)) {
+        newName = newName.replace(/del huerto/gi, 'Fresca');
+        changed = true;
+      }
+      if (/huerta/i.test(newName)) {
+        newName = newName.replace(/huerta/gi, 'Estación');
+        changed = true;
+      }
+      if (/huerto/i.test(newName)) {
+        newName = newName.replace(/huerto/gi, 'Estación');
+        changed = true;
+      }
+
+      if (newDesc && /huert[oa]/i.test(newDesc)) {
+        newDesc = newDesc
+          .replace(/de la huerta/gi, 'de estación')
+          .replace(/del huerto/gi, 'de estación')
+          .replace(/de huerta/gi, 'de estación')
+          .replace(/huerta/gi, 'estación')
+          .replace(/huerto/gi, 'estación');
+        changed = true;
+      }
+
+      if (changed) {
+        await prisma.product.update({
+          where: { id: p.id },
+          data: { name: newName, description: newDesc }
+        });
+        console.log(`[DB] Producto #${p.id} renombrado a "${newName}"`);
+      }
+    }
     console.log('[DB] Productos actualizados sin referencias a huerta');
   } catch (cleanErr: any) {
     console.warn('[DB] Nota sobre actualización de productos:', cleanErr?.message);

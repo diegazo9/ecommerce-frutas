@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ShoppingCart, Check, Scale, Eye } from 'lucide-react';
 import type { Product } from '../services/api';
+import { cleanText } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { ComboDetailModal } from './ComboDetailModal';
 
@@ -185,11 +186,11 @@ export const ProductCard = ({ product, onOpenDetail, allProducts }: ProductCardP
             onClick={handleOpenDetail}
             className="font-black text-lg text-slate-800 mb-1 leading-tight group-hover:text-emerald-600 transition-colors cursor-pointer"
           >
-            {product.name}
+            {cleanText(product.name)}
           </h3>
 
           <p className="text-slate-500 text-xs line-clamp-2 mb-3 font-medium">
-            {product.description}
+            {cleanText(product.description)}
           </p>
 
           {/* Botón destacado "Ver qué incluye" específico para combos */}

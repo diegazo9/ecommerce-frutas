@@ -51,11 +51,29 @@ export interface Order {
   [key: string]: any;
 }
 
+export const cleanText = (text: string | null | undefined): string => {
+  if (!text) return '';
+  return text
+    .replace(/huerto\s+familiar/gi, 'Familiar Semanal')
+    .replace(/bols[oó]n\s+huerto/gi, 'Bolsón')
+    .replace(/de\s+huerta\s+fresca/gi, 'Frescas')
+    .replace(/de\s+la\s+huerta/gi, 'de estación')
+    .replace(/de\s+huerta/gi, 'Fresca')
+    .replace(/del\s+huerto/gi, 'Fresca')
+    .replace(/huerta/gi, 'Estación')
+    .replace(/huerto/gi, 'Estación');
+};
+
 export const getProducts = async (includeOutOfStock: boolean = false): Promise<Product[]> => {
   const url = includeOutOfStock ? `${API_URL}/products?all=true` : `${API_URL}/products`;
   const response = await fetch(url);
   if (!response.ok) throw new Error('Error fetch products');
-  return response.json();
+  const products: Product[] = await response.json();
+  return products.map(p => ({
+    ...p,
+    name: cleanText(p.name),
+    description: cleanText(p.description),
+  }));
 };
 
 export const getCategories = async (): Promise<Category[]> => {
